@@ -3,18 +3,18 @@
 import pytest
 from pydantic import ValidationError
 
-from app.domain.entities.model_profile import ModelDefaults, ModelProfile
+from app.domain.entities.model_profile import TTSModelDefaults, ModelProfile
 
 
-class TestModelDefaults:
+class TestTTSModelDefaults:
     def test_default_values(self):
-        d = ModelDefaults()
+        d = TTSModelDefaults()
         assert d.response_format == "wav"
         assert d.speed == 1.0
         assert d.timeout_sec == 120
 
     def test_custom_values(self):
-        d = ModelDefaults(response_format="wav", speed=1.0, timeout_sec=60)
+        d = TTSModelDefaults(response_format="wav", speed=1.0, timeout_sec=60)
         assert d.timeout_sec == 60
 
 
@@ -38,7 +38,7 @@ class TestModelProfile:
             display_name="Default TTS",
             provider="irodori",
             engine="base",
-            defaults=ModelDefaults(response_format="wav", speed=1.0, timeout_sec=120),
+            defaults=TTSModelDefaults(response_format="wav", speed=1.0, timeout_sec=120),
             provider_config={
                 "checkpoint": "Aratako/Irodori-TTS-500M-v2",
                 "model_device": "cuda",

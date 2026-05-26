@@ -9,7 +9,7 @@ from app.domain.errors import (
     UnsupportedSpeedError,
     ProviderExecutionError,
     ProviderTimeoutError,
-    TTSAdapterError,
+    VoiceGatewayError,
 )
 
 
@@ -57,7 +57,7 @@ class TestErrorMapper:
         assert body["error"]["code"] == "provider_execution_error"
 
     def test_unknown_error_maps_to_500(self):
-        err = TTSAdapterError("unknown")
+        err = VoiceGatewayError("unknown")
         status, body = ErrorMapper.map(err)
         assert status == 500
         assert body["error"]["code"] == "internal_error"

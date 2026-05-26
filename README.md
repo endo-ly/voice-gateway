@@ -1,147 +1,117 @@
-# tts-adapter
+# voice-gateway
 
-常駐TTS APIサーバー。OpenAI互換のTTS APIとして外部から利用でき、内部では複数のTTSエンジンをProviderとして切り替えられる。
+Unified voice gateway for STT and TTS with OpenAI-compatible API.
 
-## Why tts-adapter
+## Architecture
 
-`tts-adapter` は、TTSエンジンを直接使うためのライブラリではなく、**複数のTTSエンジンをエージェントや外部ツールから同じ形で扱うためのアダプタサーバー**である。
+Clean Architecture / 4-layer (Handler → UseCase → Gateway → Provider).
 
-TTSエンジンは、それぞれAPI形式、モデル指定、声の指定方法、実行方法が異なる。`tts-adapter` はその差分を吸収し、クライアント側からは次のように扱えるようにする。
+Provider abstraction allows swapping TTS/STT engines without changing API contracts. YAML profiles manage model and voice configuration.
 
-```json
-{
-  "model": "tts-default",
-  "voice": "your-voice-name",
-  "input": "こんにちは"
-}
-```
+## Modes
 
-目的は **「TTSを動かすこと」そのものよりも、「声の出口を安定したAPIとして固定すること」**。詳細は [CONCEPT](docs/CONCEPT.md) を参照。
+| Mode | Description |
+|------|-------------|
+| `tts` | Text-to-Speech only |
+| `stt` | Speech-to-Text only |
+| `all` | Both TTS and STT (default) |
 
-## 特徴
+## Features
 
-- **OpenAI互換API** — `POST /v1/audio/speech` でOpenClaw等から `baseUrl` 差し替えで利用可能
-- **Native API** — `POST /v1/speech` で自作エージェント向けの拡張パラメータを利用可能
-- **YAMLプロファイル** — model / voice の設定をYAMLで管理。v0では起動時に読み込み、将来的に再読み込みに対応予定
+- **Provider abstraction** — Swap TTS/STT engines without API changes
+- **YAML profiles** — Model and voice configuration via YAML files
+- **OpenAI-compatible API** — Drop-in replacement for OpenAI TTS/STT endpoints
+- **Native API** — Extended parameters for custom integrations
 
-現在対応しているTTSエンジン:
+## Quick Start
 
-| Provider | 説明 |
-|----------|------|
-| [Irodori-TTS](https://github.com/Aratako/Irodori-TTS) | Flow Matchingベースの日本語TTS。ゼロショット音声クローン（base）とキャプション条件付き音声設計（VoiceDesign）に対応 |
-
-追加のTTSエンジンはProviderとして拡張可能。詳細は [拡張ガイド](docs/extension-guide.md) を参照。
-
-## クイックスタート
-
-### 1. セットアップ
+### 1. Install
 
 ```bash
 uv sync --group dev
+
+# With ReazonSpeech K2 STT support:
+uv sync --group dev --extra reazonspeech-k2
+./scripts/install-reazonspeech-k2.sh
 ```
 
-### 2. 設定ファイルの配置
+### 2. Configure
 
 ```bash
 cp assets/models/models.example.yaml assets/models/models.yaml
 cp assets/voices/your-voice-name/profile.example.yaml assets/voices/your-voice-name/profile.yaml
 ```
 
-使用するTTSプロバイダーの実行PATHを環境変数として設定:
+Set environment variables (or use `.env`):
 
 ```bash
+export VOICE_GATEWAY_MODE=all
 export IRODORI_REPO_DIR=/path/to/Irodori-TTS
 ```
 
-`.env` に書く場合、Windowsパスは `IRODORI_REPO_DIR='C:\svc\runtimes\Irodori-TTS'` のようにシングルクォートで囲むか、`C:/svc/runtimes/Irodori-TTS` のように `/` を使う。
-
-詳細は [設定ガイド](docs/configuration.md) を参照。
-
-### 3. WAVからPTへの変換
-
-Irodori-TTS の base engine では `ref_wav_path` または `ref_latent_path` を使う。両方ある場合は `ref_latent_path` が優先されるため、初回だけ `ref.wav` から `ref_latent.pt` を生成しておくと、以後の推論はPTを参照できる。
-
-```bash
-# ref.wav から ref_latent.pt を生成
-uv run python -m app.cli voices build-ref-latent \
-  --voice-id your-voice-name \
-  --model-id tts-default
-
-# 生成した ref_latent.pt を profile.yaml に書き込む
-uv run python -m app.cli voices build-ref-latent \
-  --voice-id your-voice-name \
-  --model-id tts-default \
-  --write-profile
-
-# 全voiceをまとめて変換し、profile.yaml も更新
-uv run python -m app.cli voices materialize-ref-latents \
-  --all \
-  --model-id tts-default \
-  --write-profile
-```
-
-`--write-profile` を付けると、`assets/voices/<voice-id>/profile.yaml` に `ref_latent_path: assets/voices/<voice-id>/ref_latent.pt` が追加される。
-
-### 4. 起動
+### 3. Run
 
 ```bash
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8012
 ```
 
-### 5. 動作確認
+### 4. Verify
 
 ```bash
 curl http://127.0.0.1:8012/health
 # → {"status":"ok"}
-
-curl http://127.0.0.1:8012/v1/models | jq .
-curl http://127.0.0.1:8012/v1/voices | jq .
-
-curl -X POST http://127.0.0.1:8012/v1/audio/speech \
-  -H "Content-Type: application/json" \
-  -d '{"model":"tts-default","voice":"your-voice-name","input":"こんにちは"}' \
-  --output test.wav
 ```
 
-Windows PowerShell:
+## Environment Variables
 
-```powershell
-$body='{"model":"tts-default","voice":"your-voice-name","input":"こんにちは"}'; irm http://127.0.0.1:8012/v1/audio/speech -Method Post -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($body)) -OutFile test.wav
-```
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VOICE_GATEWAY_MODE` | `all` | Server mode: `tts`, `stt`, or `all` |
+| `IRODORI_REPO_DIR` | — | Irodori-TTS installation path |
+| `STT_VENDOR_DIR` | `.vendor` | ReazonSpeech installation directory |
 
-## OpenClawからの利用
+## API Endpoints
 
-```json
-{
-  "messages": {
-    "tts": {
-      "auto": "tagged",
-      "provider": "openai",
-      "providers": {
-        "openai": {
-          "apiKey": "local",
-          "baseUrl": "http://127.0.0.1:8012/v1",
-          "model": "tts-default",
-          "voice": "your-voice-name"
-        }
-      }
-    }
-  }
-}
-```
+### TTS
 
-## ドキュメント
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/v1/audio/speech` | OpenAI-compatible TTS |
+| POST | `/v1/speech` | Native TTS with extended params |
 
-| 対象 | ドキュメント | 内容 |
-|------|------------|------|
-| 全般 | [CONCEPT](docs/CONCEPT.md) | 設計思想、使う理由、使わないケース |
-| 利用者 | [APIリファレンス](docs/api-reference.md) | 全エンドポイントの入出力仕様 |
-| 利用者 | [設定ガイド](docs/configuration.md) | 環境変数、プロファイル、マージ規則 |
-| 開発者 | [アーキテクチャ](docs/architecture.md) | レイヤー分離、データフロー、主要クラス |
-| 開発者 | [拡張ガイド](docs/extension-guide.md) | Provider・Voice・Modelの追加手順 |
-| 開発者 | [開発ガイド](docs/development.md) | 環境構築、テスト、プロジェクト構成 |
-| 開発者 | [プロバイダー: Irodori](docs/providers/irodori.md) | Irodori CLIの呼び出し方法・引数・設定 |
+### STT
 
-## ライセンス
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/v1/audio/transcriptions` | OpenAI-compatible transcription |
+| POST | `/v1/transcribe` | Native transcription with extended params |
+
+### General
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| GET | `/v1/models` | List available models |
+| GET | `/v1/voices` | List available voices |
+
+## Provider Support
+
+| Provider | Direction | Call Method |
+|----------|-----------|-------------|
+| [Irodori-TTS](docs/providers/irodori.md) | TTS | Subprocess (CLI) |
+| [ReazonSpeech K2](docs/providers/reazonspeech-k2.md) | STT | Python import |
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CONCEPT](docs/CONCEPT.md) | Design philosophy |
+| [API Reference](docs/api-reference.md) | Endpoint specifications |
+| [Configuration](docs/configuration.md) | Environment variables and profiles |
+| [Architecture](docs/architecture.md) | Layer separation and data flow |
+| [Extension Guide](docs/extension-guide.md) | Adding providers, voices, models |
+| [Development](docs/development.md) | Setup, testing, project structure |
+
+## License
 
 [MIT](LICENSE)

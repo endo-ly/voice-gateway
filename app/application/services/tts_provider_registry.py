@@ -4,7 +4,7 @@ from app.domain.errors import ProviderNotFoundError
 from app.domain.interfaces.tts_provider import TTSProvider
 
 
-class ProviderRegistry:
+class TTSProviderRegistry:
     def __init__(self) -> None:
         self._providers: dict[str, TTSProvider] = {}
 

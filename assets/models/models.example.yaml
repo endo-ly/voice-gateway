@@ -1,5 +1,6 @@
 models:
   - id: tts-default
+    direction: tts
     object: model
     display_name: Default TTS
     provider: irodori
@@ -18,6 +19,7 @@ models:
       max_caption_len: 1024
 
   - id: irodori-voicedesign
+    direction: tts
     object: model
     display_name: Irodori VoiceDesign
     provider: irodori
@@ -36,6 +38,7 @@ models:
       max_caption_len: 1024
 
   - id: tts-fake
+    direction: tts
     object: model
     display_name: Fake TTS
     provider: fake
@@ -45,3 +48,18 @@ models:
       speed: 1.0
       timeout_sec: 120
     provider_config: {}
+
+  # STT
+  - id: stt-default
+    direction: stt
+    object: model
+    display_name: ReazonSpeech K2 v2
+    provider: reazonspeech_k2
+    engine: k2
+    defaults:
+      language: ja
+      max_audio_seconds: 30
+      timeout_sec: 120
+    provider_config:
+      model_id: reazon-research/reazonspeech-k2-v2
+      precision: fp32

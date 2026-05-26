@@ -1,7 +1,7 @@
 [project]
-name = "tts-adapter"
+name = "voice-gateway"
 version = "0.1.0"
-description = "TTS API adapter server with multi-provider support"
+description = "Unified voice gateway for STT and TTS"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
@@ -10,6 +10,12 @@ dependencies = [
     "pydantic>=2.13.3",
     "pyyaml>=6.0.3",
     "pydantic-settings>=2.14.0",
+    "python-multipart>=0.0.20",
+]
+
+[project.optional-dependencies]
+reazonspeech-k2 = [
+    "sherpa-onnx>=1.10.0",
 ]
 
 [dependency-groups]
