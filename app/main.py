@@ -131,6 +131,8 @@ if _mode in ("stt", "all"):
         transcription_store=_transcription_store,
     )
     app.state.stt_provider_names = sorted(configured_stt_providers)
+    app.state.stt_callback_url = _settings.stt_callback_url
+    app.state.stt_callback_timeout_ms = _settings.stt_callback_timeout_ms
 
 # ── Common state ──
 app.state.model_repo = _model_repo

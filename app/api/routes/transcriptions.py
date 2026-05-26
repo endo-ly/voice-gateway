@@ -1,19 +1,22 @@
 """Native STT transcription route."""
 
 import json
+import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse, Response
 
-from app.api.dependencies import get_transcribe_audio
+from app.api.dependencies import get_stt_callback_timeout_ms, get_stt_callback_url, get_transcribe_audio
 from app.api.schemas.transcription import NativeTranscriptionData, NativeTranscriptionResponse
 from app.application.services.error_mapper import ErrorMapper
 from app.application.use_cases.transcribe_audio import TranscribeAudio
 from app.domain.errors import AudioTooLargeError, VoiceGatewayError
+from app.infrastructure.events.stt_callback_dispatcher import dispatch_stt_callbacks
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/v1/transcribe")
@@ -23,6 +26,8 @@ async def transcribe(
     source: str = Form("unknown"),
     language: str | None = Form(None),
     uc: TranscribeAudio = Depends(get_transcribe_audio),
+    callback_url: str | None = Depends(get_stt_callback_url),
+    callback_timeout_ms: int = Depends(get_stt_callback_timeout_ms),
 ) -> Response:
     try:
         data = await file.read()
@@ -40,6 +45,11 @@ async def transcribe(
                 source=source,
                 language=language,
             )
+
+        if callback_url:
+            warning = dispatch_stt_callbacks(result, callback_url, callback_timeout_ms)
+            if warning:
+                logger.warning("STT callback failed: %s", warning.message)
 
         response_data = NativeTranscriptionData(
             text=result.text,

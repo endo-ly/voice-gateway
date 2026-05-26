@@ -27,3 +27,11 @@ def get_transcribe_audio(request: Request) -> TranscribeAudio:
 
 def get_latest_transcription(request: Request) -> GetLatestTranscription:
     return request.app.state.get_latest_transcription
+
+
+def get_stt_callback_url(request: Request) -> str | None:
+    return request.app.state.stt_callback_url
+
+
+def get_stt_callback_timeout_ms(request: Request) -> int:
+    return request.app.state.stt_callback_timeout_ms
