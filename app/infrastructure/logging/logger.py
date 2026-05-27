@@ -2,7 +2,7 @@
 
 import logging
 
-logger = logging.getLogger("tts-adapter")
+logger = logging.getLogger("voice-gateway")
 
 
 def setup_logging(level: int | str = logging.INFO) -> None:

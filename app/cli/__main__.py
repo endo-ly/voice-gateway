@@ -5,7 +5,7 @@ import sys
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="app.cli", description="tts-adapter management CLI")
+    parser = argparse.ArgumentParser(prog="app.cli", description="voice-gateway management CLI")
     subparsers = parser.add_subparsers(dest="command")
 
     from app.cli.voices import register_parser as register_voices

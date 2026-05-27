@@ -1,7 +1,7 @@
 """Bridge script: encode a WAV file into a DACVAE latent tensor (.pt).
 
 Runs inside Irodori-TTS's environment (cwd = IRODORI_REPO_DIR).
-Called by tts-adapter's LatentEncoder via subprocess.
+Called by voice-gateway's LatentEncoder via subprocess.
 """
 
 import argparse
