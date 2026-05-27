@@ -55,6 +55,12 @@ async def openai_transcriptions(
             if warning:
                 logger.warning("STT callback failed: %s", warning.message)
 
+        if response_format == "text":
+            return Response(
+                content=result.text,
+                media_type="text/plain; charset=utf-8",
+            )
+
         return JSONResponse(
             content=TranscriptionResponse(text=result.text).model_dump()
         )

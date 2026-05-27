@@ -34,8 +34,11 @@ models:
       timeout_sec: 120
     provider_config:
       model_id: reazon-research/reazonspeech-k2-v2
-      precision: fp32
 ```
+
+> **Note**: `precision` and `device` settings are not yet supported by the
+> provider. They are reserved for future use. Do not add them to
+> `provider_config` — they will be silently ignored.
 
 ### Environment Variables
 
@@ -49,6 +52,19 @@ models:
 - Default max duration: 30 seconds
 - Default preferred sample rate: 16000 Hz
 - Default preferred channels: 1 (mono)
+
+## Limitations
+
+- **Single model only**: The provider loads exactly one ReazonSpeech K2 model
+  per process. If multiple `direction: stt` models are defined in `models.yaml`,
+  only the first `reazonspeech_k2` entry is used for provider initialization.
+  The API accepts `model` parameter, but all requests are processed by the same
+  loaded model instance.
+- **No runtime config switching**: `provider_config` values (e.g. `model_id`,
+  `language`) are read at startup only. Per-request config overrides from
+  `STTProfileResolver` are resolved but **not forwarded** to the provider at
+  transcription time. Full `provider_config` propagation is planned for a
+  future release.
 
 ## API Usage
 
@@ -86,7 +102,11 @@ Response:
     "provider": "reazonspeech_k2",
     "model": "reazon-research/reazonspeech-k2-v2",
     "source": "stackchan",
-    "audio": null
+    "audio": {
+      "sampleRate": 16000,
+      "channels": 1,
+      "format": "wav"
+    }
   }
 }
 ```
