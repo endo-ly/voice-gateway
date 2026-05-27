@@ -55,16 +55,12 @@ models:
 
 ## Limitations
 
-- **Single model only**: The provider loads exactly one ReazonSpeech K2 model
-  per process. If multiple `direction: stt` models are defined in `models.yaml`,
-  only the first `reazonspeech_k2` entry is used for provider initialization.
-  The API accepts `model` parameter, but all requests are processed by the same
-  loaded model instance.
-- **No runtime config switching**: `provider_config` values (e.g. `model_id`,
-  `language`) are read at startup only. Per-request config overrides from
-  `STTProfileResolver` are resolved but **not forwarded** to the provider at
-  transcription time. Full `provider_config` propagation is planned for a
-  future release.
+- **Model cache**: Models are lazily loaded on first use and cached by
+  `model_id:language` key. Different `model_id` or `language` values in
+  `provider_config` will trigger a new model load (expensive on first request).
+  Subsequent requests with the same key reuse the cached model.
+- **No model unloading**: Once loaded, models stay in memory for the process
+  lifetime. There is no eviction or unloading mechanism.
 
 ## API Usage
 
