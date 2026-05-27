@@ -1,116 +1,212 @@
 # voice-gateway
 
-Unified voice gateway for STT and TTS with OpenAI-compatible API.
+複数のTTS・STTエンジンを、OpenAI互換APIで統一的に扱うゲートウェイサーバー。
 
-## Architecture
+音声エンジンごとに異なるAPI形式や設定方法を吸収し、クライアント側はエンジンを意識せずに音声の入出力を行える。エージェントシステムや外部ツールから、同じAPIでTTS・STTを利用したい場合に使う。
 
-Clean Architecture / 4-layer (Handler → UseCase → Gateway → Provider).
+## 特徴
 
-Provider abstraction allows swapping TTS/STT engines without changing API contracts. YAML profiles manage model and voice configuration.
+- **Provider抽象化** — TTS・STTエンジンをAPIを変えずに差し替え可能
+- **OpenAI互換API** — `/v1/audio/speech`, `/v1/audio/transcriptions` でOpenAIクライアントと互換
+- **Native API** — 拡張パラメータを使える独自エンドポイント
+- **YAMLプロファイル** — モデル・音声の設定をYAMLで管理
+- **モード切替** — 1コードベースでTTS専用・STT専用・両対応を切り替え
 
-## Modes
+## サーバーモード
 
-| Mode | Description |
-|------|-------------|
-| `tts` | Text-to-Speech only |
-| `stt` | Speech-to-Text only |
-| `all` | Both TTS and STT (default) |
+`VOICE_GATEWAY_MODE` により起動する機能を切り替える。異なるマシンで同じコードベースを使い分けられる。
 
-## Features
+| モード | 登録されるルート | ユースケース |
+|------|-------------|------------|
+| `tts` | TTS系 + 共通 | GPU搭載WindowsマシンでIrodori等を動かす |
+| `stt` | STT系 + 共通 | 軽量ミニPCでReazonSpeech等を動かす |
+| `all` | 全ルート | 1台でTTS・STT両方を動かす |
 
-- **Provider abstraction** — Swap TTS/STT engines without API changes
-- **YAML profiles** — Model and voice configuration via YAML files
-- **OpenAI-compatible API** — Drop-in replacement for OpenAI TTS/STT endpoints
-- **Native API** — Extended parameters for custom integrations
+## クイックスタート
 
-## Quick Start
-
-### 1. Install
+### 1. インストール
 
 ```bash
+git clone https://github.com/endo-ly/voice-gateway.git && cd voice-gateway
 uv sync --group dev
 
-# With ReazonSpeech K2 STT support:
+# ReazonSpeech K2 (STT) を含む場合:
 uv sync --group dev --extra reazonspeech-k2
 ./scripts/install-reazonspeech-k2.sh
 ```
 
-### 2. Configure
+### 2. 設定
+
+テンプレートから設定ファイルを作成:
 
 ```bash
 cp assets/models/models.example.yaml assets/models/models.yaml
 cp assets/voices/your-voice-name/profile.example.yaml assets/voices/your-voice-name/profile.yaml
 ```
 
-Set environment variables (or use `.env`):
+環境変数を設定（`.env` ファイルも可）:
 
 ```bash
+# モード（デフォルト: all）
 export VOICE_GATEWAY_MODE=all
+
+# Irodori-TTS（TTS利用時）
 export IRODORI_REPO_DIR=/path/to/Irodori-TTS
 ```
 
-### 3. Run
+### 3. 起動
+
+構成に応じて `--host` を使い分ける:
 
 ```bash
+# 同じマシン内からのみアクセス（開発・ローカル利用）
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8012
+
+# 別マシンからアクセス（全インターフェースにバインド）
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8012
+
+# 別マシンからアクセス（特定のインターフェースにバインド）
+uv run uvicorn app.main:app --host 192.168.0.86 --port 8012
 ```
 
-### 4. Verify
+### 4. 動作確認
 
 ```bash
 curl http://127.0.0.1:8012/health
-# → {"status":"ok"}
+# → {"status":"ok","providers":{"tts":{"registered":["irodori"],"loaded":["irodori"]},...}}
 ```
 
-## Environment Variables
+## 使い方
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VOICE_GATEWAY_MODE` | `all` | Server mode: `tts`, `stt`, or `all` |
-| `IRODORI_REPO_DIR` | — | Irodori-TTS installation path |
-| `STT_VENDOR_DIR` | `.vendor` | ReazonSpeech installation directory |
+### TTS（音声合成）
 
-## API Endpoints
+**OpenAI互換:**
+
+```bash
+curl -X POST http://127.0.0.1:8012/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{"model":"tts-default","voice":"your-voice-name","input":"こんにちは"}' \
+  --output output.wav
+```
+
+**Native（拡張パラメータ）:**
+
+```bash
+curl -X POST http://127.0.0.1:8012/v1/speech \
+  -H "Content-Type: application/json" \
+  -d '{"model":"tts-default","voice_id":"your-voice-name","speech_text":"こんにちは"}' \
+  --output output.wav
+```
+
+### STT（音声認識）
+
+**OpenAI互換:**
+
+```bash
+curl -X POST http://127.0.0.1:8012/v1/audio/transcriptions \
+  -F "file=@audio.wav" \
+  -F "model=stt-default"
+# → {"text":"転写されたテキスト"}
+```
+
+**Native（拡張パラメータ）:**
+
+```bash
+curl -X POST http://127.0.0.1:8012/v1/transcribe \
+  -F "file=@audio.wav" \
+  -F "model=stt-default" \
+  -F "source=stackchan"
+```
+
+**直近の転写結果:**
+
+```bash
+curl http://127.0.0.1:8012/v1/transcribe/latest
+```
+
+### サーバー情報
+
+```bash
+# モード・Provider・Model一覧
+curl http://127.0.0.1:8012/v1/capabilities
+
+# Model一覧
+curl http://127.0.0.1:8012/v1/models
+
+# Voice一覧（tts/allモードのみ）
+curl http://127.0.0.1:8012/v1/voices
+```
+
+## 環境変数
+
+### 共通
+
+| 変数 | デフォルト | 説明 |
+|----------|---------|------|
+| `VOICE_GATEWAY_MODE` | `all` | サーバーモード: `tts`, `stt`, `all` |
+| `HOST` | `127.0.0.1` | 待受ホスト |
+| `PORT` | `8012` | 待受ポート |
+| `LOG_LEVEL` | `INFO` | ログレベル |
+| `TIMEOUT_SEC` | `120` | Provider実行タイムアウト（秒） |
+| `MAX_CONCURRENCY` | `1` | 同時実行数上限 |
 
 ### TTS
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/v1/audio/speech` | OpenAI-compatible TTS |
-| POST | `/v1/speech` | Native TTS with extended params |
+| 変数 | デフォルト | 説明 |
+|----------|---------|------|
+| `IRODORI_REPO_DIR` | — | Irodori-TTSインストールパス（Irodori利用時必須） |
 
 ### STT
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/v1/audio/transcriptions` | OpenAI-compatible transcription |
-| POST | `/v1/transcribe` | Native transcription with extended params |
+| 変数 | デフォルト | 説明 |
+|----------|---------|------|
+| `STT_VENDOR_DIR` | `.vendor` | ReazonSpeechインストールディレクトリ |
+| `STT_CALLBACK_URL` | — | 転写完了時のコールバックURL |
+| `STT_CALLBACK_TIMEOUT_MS` | `3000` | コールバックタイムアウト（ms） |
 
-### General
+## APIエンドポイント
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
-| GET | `/v1/models` | List available models |
-| GET | `/v1/voices` | List available voices (tts/all only) |
+### 共通（全モード）
 
-## Provider Support
+| メソッド | パス | 説明 |
+|--------|----------|------|
+| GET | `/health` | 死活監視 + Provider状態 |
+| GET | `/v1/models` | Model一覧 |
+| GET | `/v1/capabilities` | サーバー機能情報 |
 
-| Provider | Direction | Call Method |
-|----------|-----------|-------------|
-| [Irodori-TTS](docs/providers/irodori.md) | TTS | Subprocess (CLI) |
-| [ReazonSpeech K2](docs/providers/reazonspeech-k2.md) | STT | Python import |
+### TTS（tts / all）
 
-## Documentation
+| メソッド | パス | 説明 |
+|--------|----------|------|
+| GET | `/v1/voices` | Voice一覧 |
+| POST | `/v1/audio/speech` | OpenAI互換TTS |
+| POST | `/v1/speech` | Native TTS |
 
-| Document | Description |
-|----------|-------------|
-| [CONCEPT](docs/CONCEPT.md) | Design philosophy |
-| [API Reference](docs/api-reference.md) | Endpoint specifications |
-| [Configuration](docs/configuration.md) | Environment variables and profiles |
-| [Architecture](docs/architecture.md) | Layer separation and data flow |
-| [Extension Guide](docs/extension-guide.md) | Adding providers, voices, models |
-| [Development](docs/development.md) | Setup, testing, project structure |
+### STT（stt / all）
+
+| メソッド | パス | 説明 |
+|--------|----------|------|
+| POST | `/v1/audio/transcriptions` | OpenAI互換STT |
+| POST | `/v1/transcribe` | Native STT |
+| GET | `/v1/transcribe/latest` | 直近の転写結果 |
+
+## Provider対応
+
+| Provider | 方向 | 呼び出し方式 | 動作環境 |
+|----------|------|------------|---------|
+| [Irodori-TTS](docs/providers/irodori.md) | TTS | CLI subprocess | Windows / Linux + GPU推奨 |
+| [ReazonSpeech K2](docs/providers/reazonspeech-k2.md) | STT | Python import | Linux |
+
+## ドキュメント
+
+| ドキュメント | 内容 |
+|----------|------|
+| [コンセプト](docs/CONCEPT.md) | 設計思想と使う理由 |
+| [APIリファレンス](docs/api-reference.md) | 全エンドポイントの仕様 |
+| [設定ガイド](docs/configuration.md) | 環境変数とYAMLプロファイル |
+| [アーキテクチャ](docs/architecture.md) | 層構造とデータフロー |
+| [拡張ガイド](docs/extension-guide.md) | Provider / Voice / Modelの追加手順 |
+| [開発ガイド](docs/development.md) | 環境構築、テスト、プロジェクト構成 |
 
 ## License
 

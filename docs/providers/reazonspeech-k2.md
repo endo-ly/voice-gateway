@@ -1,22 +1,22 @@
 # ReazonSpeech K2 Provider
 
-Speech-to-Text provider using [ReazonSpeech K2](https://github.com/reazon-research/ReazonSpeech).
+[ReazonSpeech K2](https://github.com/reazon-research/ReazonSpeech) をバックエンドとして利用するSTT Providerの内部仕様。
 
-## Overview
+## 概要
 
-- Provider name: `reazonspeech_k2`
-- Direction: STT
-- Call method: Python import (async wrapped via `asyncio.to_thread()`)
-- Language: Japanese (default)
+- Provider名: `reazonspeech_k2`
+- 方向: STT
+- 呼び出し方式: Python import（`asyncio.to_thread()` で非同期ラップ）
+- 言語: 日本語（デフォルト）
 
-## Installation
+## インストール
 
 ```bash
 uv sync --group dev --extra reazonspeech-k2
 ./scripts/install-reazonspeech-k2.sh
 ```
 
-## Configuration
+## 設定
 
 ### models.yaml
 
@@ -36,35 +36,29 @@ models:
       model_id: reazon-research/reazonspeech-k2-v2
 ```
 
-> **Note**: `precision` and `device` settings are not yet supported by the
-> provider. They are reserved for future use. Do not add them to
-> `provider_config` — they will be silently ignored.
+> **Note**: `precision` と `device` は未対応。将来のために予約済み。`provider_config` に追加しても無視される。
 
-### Environment Variables
+### 環境変数
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `STT_VENDOR_DIR` | `.vendor` | ReazonSpeech installation directory |
+| 変数 | デフォルト | 説明 |
+|------|-----------|------|
+| `STT_VENDOR_DIR` | `.vendor` | ReazonSpeechインストールディレクトリ |
 
-## Audio Requirements
+## 音声要件
 
-- Format: WAV (PCM)
-- Default max duration: 30 seconds
-- Default preferred sample rate: 16000 Hz
-- Default preferred channels: 1 (mono)
+- 形式: WAV（PCM）
+- デフォルト最大長: 30秒
+- 推奨サンプルレート: 16000 Hz
+- 推奨チャンネル数: 1（モノラル）
 
-## Limitations
+## 制限事項
 
-- **Model cache**: Models are lazily loaded on first use and cached by
-  `model_id:language` key. Different `model_id` or `language` values in
-  `provider_config` will trigger a new model load (expensive on first request).
-  Subsequent requests with the same key reuse the cached model.
-- **No model unloading**: Once loaded, models stay in memory for the process
-  lifetime. There is no eviction or unloading mechanism.
+- **モデルキャッシュ**: モデルは初回使用時に遅延ロードされ、`model_id:language` キーでキャッシュされる。異なる `model_id` や `language` を指定すると新たにモデルがロードされる（初回リクエストは重い）。同じキーの後続リクエストはキャッシュを再利用する。
+- **モデルのアンロードなし**: 一度ロードされたモデルはプロセスの生存期間中メモリに残る。退去・アンロードの仕組みはない。
 
-## API Usage
+## API使用例
 
-### OpenAI-compatible
+### OpenAI互換
 
 ```bash
 curl -X POST http://localhost:8012/v1/audio/transcriptions \
@@ -72,7 +66,7 @@ curl -X POST http://localhost:8012/v1/audio/transcriptions \
   -F "model=stt-default"
 ```
 
-Response:
+レスポンス:
 ```json
 {"text": "転写されたテキスト"}
 ```
@@ -86,7 +80,7 @@ curl -X POST http://localhost:8012/v1/transcribe \
   -F "source=stackchan"
 ```
 
-Response:
+レスポンス:
 ```json
 {
   "ok": true,
