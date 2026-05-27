@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from app.api.routes.health import router as health_router
 from app.api.routes.models import router as models_router
+from app.api.routes.capabilities import router as capabilities_router
 from app.application.services.model_resolver import ModelResolver
 from app.application.services.option_merger import OptionMerger
 from app.application.services.tts_profile_resolver import TTSProfileResolver
@@ -28,6 +29,7 @@ app = FastAPI(title="voice-gateway", version="0.1.0")
 # ── Common ──
 app.include_router(health_router)
 app.include_router(models_router)
+app.include_router(capabilities_router)
 
 _settings = Settings()
 setup_logging(_settings.log_level)
@@ -96,7 +98,6 @@ if _mode in ("stt", "all"):
     from app.api.routes.openai_transcriptions import router as openai_transcriptions_router
     from app.api.routes.transcriptions import router as transcriptions_router
     from app.api.routes.transcriptions_latest import router as transcriptions_latest_router
-    from app.api.routes.capabilities import router as capabilities_router
 
     from app.infrastructure.providers.reazonspeech_k2.provider import ReazonSpeechK2Provider
 
@@ -117,7 +118,6 @@ if _mode in ("stt", "all"):
     _stt_resolver = STTProfileResolver(_model_resolver)
     _transcription_store = InMemoryTranscriptionStore()
 
-    app.include_router(capabilities_router)
     app.include_router(openai_transcriptions_router)
     app.include_router(transcriptions_router)
     app.include_router(transcriptions_latest_router)
@@ -135,5 +135,7 @@ if _mode in ("stt", "all"):
     app.state.stt_callback_timeout_ms = _settings.stt_callback_timeout_ms
 
 # ── Common state ──
+app.state.tts_registry = _tts_registry
+app.state.stt_registry = _stt_registry
 app.state.model_repo = _model_repo
 app.state.voice_repo = _voice_repo

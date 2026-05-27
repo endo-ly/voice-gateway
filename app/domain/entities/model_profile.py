@@ -23,12 +23,21 @@ class ModelProfile(BaseModel):
     defaults: TTSModelDefaults | STTModelDefaults = Field(default_factory=TTSModelDefaults)
     provider_config: dict[str, Any] = Field(default_factory=dict)
 
-    @model_validator(mode="after")
-    def normalize_defaults(self) -> "ModelProfile":
-        if isinstance(self.defaults, dict):
-            self.defaults = (
-                STTModelDefaults(**self.defaults)
-                if self.direction == "stt"
-                else TTSModelDefaults(**self.defaults)
-            )
-        return self
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_defaults_before(cls, data: dict) -> dict:
+        if not isinstance(data, dict):
+            return data
+
+        direction = data.get("direction", "tts")
+        defaults = data.get("defaults") or {}
+
+        if isinstance(defaults, (TTSModelDefaults, STTModelDefaults)):
+            return data
+
+        if direction == "stt":
+            data["defaults"] = STTModelDefaults(**defaults)
+        else:
+            data["defaults"] = TTSModelDefaults(**defaults)
+
+        return data

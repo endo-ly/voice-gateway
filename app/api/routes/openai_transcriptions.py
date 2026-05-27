@@ -1,5 +1,6 @@
 """OpenAI-compatible STT transcription route."""
 
+import asyncio
 import json
 import logging
 from pathlib import Path
@@ -47,7 +48,7 @@ async def openai_transcriptions(
             )
 
         if callback_url:
-            warning = dispatch_stt_callbacks(result, callback_url, callback_timeout_ms)
+            warning = await asyncio.to_thread(dispatch_stt_callbacks, result, callback_url, callback_timeout_ms)
             if warning:
                 logger.warning("STT callback failed: %s", warning.message)
 

@@ -15,8 +15,10 @@ class InMemoryTranscriptionStore:
         self._latest = updated
         self._timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
-    def get_latest(self) -> TranscriptionResult | None:
-        return self._latest
+    def get_latest(self) -> tuple[TranscriptionResult, str] | None:
+        if self._latest is None:
+            return None
+        return self._latest, self._timestamp or ""
 
     @property
     def timestamp(self) -> str | None:

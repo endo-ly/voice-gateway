@@ -18,16 +18,17 @@ async def latest_transcription(
     if result is None:
         response = LatestTranscriptionResponse(data=None)
     else:
+        transcription, ts = result
         data = LatestTranscriptionData(
-            text=result.text,
-            language=result.language,
-            duration_sec=result.duration_sec,
-            processing_ms=result.processing_ms,
-            provider=result.provider,
-            model=result.model,
-            source=result.source,
-            audio=result.audio_info,
-            timestamp="",
+            text=transcription.text,
+            language=transcription.language,
+            duration_sec=transcription.duration_sec,
+            processing_ms=transcription.processing_ms,
+            provider=transcription.provider,
+            model=transcription.model,
+            source=transcription.source,
+            audio=transcription.audio_info,
+            timestamp=ts,
         )
         response = LatestTranscriptionResponse(data=data)
-    return JSONResponse(content=response.model_dump())
+    return JSONResponse(content=response.model_dump(by_alias=True))

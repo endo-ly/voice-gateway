@@ -1,5 +1,6 @@
 """Native STT transcription route."""
 
+import asyncio
 import json
 import logging
 from pathlib import Path
@@ -47,7 +48,7 @@ async def transcribe(
             )
 
         if callback_url:
-            warning = dispatch_stt_callbacks(result, callback_url, callback_timeout_ms)
+            warning = await asyncio.to_thread(dispatch_stt_callbacks, result, callback_url, callback_timeout_ms)
             if warning:
                 logger.warning("STT callback failed: %s", warning.message)
 
@@ -62,7 +63,7 @@ async def transcribe(
             audio=result.audio_info,
         )
         return JSONResponse(
-            content=NativeTranscriptionResponse(data=response_data).model_dump()
+            content=NativeTranscriptionResponse(data=response_data).model_dump(by_alias=True)
         )
     except VoiceGatewayError as e:
         status, body = ErrorMapper.map(e)

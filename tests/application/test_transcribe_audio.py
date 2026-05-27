@@ -93,7 +93,7 @@ class TestTranscribeAudio:
         )
         await uc.execute(model_id="stt-default", audio_path="/tmp/test.wav", source="test")
         assert store.get_latest() is not None
-        assert store.get_latest().source == "test"
+        assert store.get_latest()[0].source == "test"
 
     async def test_execute_without_store(self):
         model = _make_stt_model()

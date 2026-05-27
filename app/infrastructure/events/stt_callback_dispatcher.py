@@ -19,8 +19,9 @@ def dispatch_stt_callbacks(
     callback_url: str,
     timeout_ms: int = 3000,
 ) -> CallbackWarning | None:
-    """Dispatch a single STT callback. Fire-and-forget.
+    """Dispatch a single STT callback.
 
+    Runs synchronously; callers should use asyncio.to_thread() for non-blocking dispatch.
     Returns CallbackWarning on failure, None on success.
     """
     if not callback_url:

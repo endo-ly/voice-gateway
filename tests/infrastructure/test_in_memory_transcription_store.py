@@ -26,14 +26,25 @@ class TestInMemoryTranscriptionStore:
         store = InMemoryTranscriptionStore()
         result = _make_result()
         store.set_latest(result)
-        assert store.get_latest() is not None
-        assert store.get_latest().text == "hello"
+        entry = store.get_latest()
+        assert entry is not None
+        assert entry[0].text == "hello"
 
     def test_overwrite_latest(self):
         store = InMemoryTranscriptionStore()
         store.set_latest(_make_result(text="first"))
         store.set_latest(_make_result(text="second"))
-        assert store.get_latest().text == "second"
+        entry = store.get_latest()
+        assert entry[0].text == "second"
+
+    def test_timestamp_returned_in_tuple(self):
+        store = InMemoryTranscriptionStore()
+        store.set_latest(_make_result())
+        entry = store.get_latest()
+        assert entry is not None
+        ts = entry[1]
+        assert ts != ""
+        assert "T" in ts or "Z" in ts
 
     def test_timestamp_set(self):
         store = InMemoryTranscriptionStore()

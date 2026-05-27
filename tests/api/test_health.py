@@ -21,3 +21,14 @@ class TestHealth:
         assert body["status"] == "ok"
         assert "mode" in body
         assert "providers" in body
+
+    async def test_health_providers_have_registered_and_loaded(self, client):
+        resp = await client.get("/health")
+        body = resp.json()
+        providers = body["providers"]
+        for direction in ("tts", "stt"):
+            entry = providers[direction]
+            if entry["enabled"]:
+                for _name, info in entry["providers"].items():
+                    assert "registered" in info
+                    assert "loaded" in info

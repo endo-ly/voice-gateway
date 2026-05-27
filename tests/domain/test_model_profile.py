@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.domain.entities.model_profile import TTSModelDefaults, ModelProfile
+from app.domain.entities.stt_model_defaults import STTModelDefaults
 
 
 class TestTTSModelDefaults:
@@ -108,3 +109,25 @@ class TestModelProfile:
         assert mp.provider == "irodori"
         assert mp.defaults.timeout_sec == 120
         assert mp.provider_config["model_device"] == "cuda"
+
+    def test_tts_dict_defaults_produces_tts_model_defaults(self):
+        mp = ModelProfile(
+            id="test",
+            display_name="Test",
+            provider="fake",
+            engine="base",
+            defaults={"response_format": "mp3", "speed": 1.5, "timeout_sec": 60},
+        )
+        assert isinstance(mp.defaults, TTSModelDefaults)
+        assert mp.defaults.response_format == "mp3"
+        assert mp.defaults.speed == 1.5
+
+    def test_no_defaults_key_produces_tts_model_defaults(self):
+        mp = ModelProfile(
+            id="test",
+            display_name="Test",
+            provider="fake",
+            engine="base",
+        )
+        assert isinstance(mp.defaults, TTSModelDefaults)
+        assert mp.defaults.response_format == "wav"

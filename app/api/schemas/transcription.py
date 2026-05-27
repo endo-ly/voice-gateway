@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TranscriptionResponse(BaseModel):
@@ -10,10 +10,12 @@ class TranscriptionResponse(BaseModel):
 
 
 class NativeTranscriptionData(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     text: str
     language: str
-    duration_sec: float
-    processing_ms: int
+    duration_sec: float = Field(serialization_alias="durationSec")
+    processing_ms: int = Field(serialization_alias="processingMs")
     provider: str
     model: str
     source: str = "unknown"
@@ -26,10 +28,12 @@ class NativeTranscriptionResponse(BaseModel):
 
 
 class LatestTranscriptionData(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     text: str
     language: str
-    duration_sec: float
-    processing_ms: int
+    duration_sec: float = Field(serialization_alias="durationSec")
+    processing_ms: int = Field(serialization_alias="processingMs")
     provider: str
     model: str
     source: str = "unknown"

@@ -2,11 +2,13 @@
 
 import wave
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app.domain.errors import AudioValidationError, AudioTooLongError
 from app.infrastructure.providers.reazonspeech_k2.audio_validator import inspect_wav
+from app.infrastructure.providers.reazonspeech_k2.provider import ReazonSpeechK2Provider
 
 
 def _write_wav(path: Path, sample_rate: int = 16000, channels: int = 1, duration_sec: float = 1.0):
@@ -52,3 +54,35 @@ class TestInspectWav:
         _write_wav(wav, sample_rate=8000, channels=1, duration_sec=1.0)
         info = inspect_wav(wav, auto_convert=True)
         assert info.sample_rate == 8000
+
+
+class TestAudioInfoPopulated:
+    def test_transcribe_result_contains_audio_info(self, tmp_path):
+        wav = tmp_path / "test.wav"
+        _write_wav(wav, sample_rate=16000, channels=1, duration_sec=1.0)
+
+        provider = ReazonSpeechK2Provider(model_id="test-model", language="ja")
+        provider._model = object()
+
+        mock_result = MagicMock()
+        mock_result.text = "テスト"
+
+        mock_asr = MagicMock()
+        mock_asr.audio_from_path.return_value = MagicMock()
+        mock_asr.transcribe.return_value = mock_result
+
+        with patch.dict("sys.modules", {"reazonspeech": MagicMock(), "reazonspeech.k2": MagicMock(), "reazonspeech.k2.asr": mock_asr}):
+            from app.domain.value_objects.transcription_request import TranscriptionRequest
+
+            request = TranscriptionRequest(
+                model_id="test-model",
+                audio_path=str(wav),
+                provider="reazonspeech_k2",
+                engine="k2",
+            )
+            result = provider._transcribe_sync(request)
+
+        assert result.audio_info is not None
+        assert result.audio_info["sampleRate"] == 16000
+        assert result.audio_info["channels"] == 1
+        assert result.audio_info["format"] == "wav"

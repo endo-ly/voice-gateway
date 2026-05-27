@@ -88,4 +88,9 @@ class ReazonSpeechK2Provider:
             processing_ms=0,
             provider=self.provider_name,
             model=self._model_id,
+            audio_info={
+                "sampleRate": info.sample_rate,
+                "channels": info.channels,
+                "format": info.format,
+            },
         )

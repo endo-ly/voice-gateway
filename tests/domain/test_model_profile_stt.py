@@ -56,3 +56,16 @@ class TestModelProfileSTTDirection:
             engine="base",
         )
         assert mp.direction == "tts"
+
+    def test_stt_dict_with_language_produces_stt_model_defaults(self):
+        data = {
+            "id": "stt-default",
+            "display_name": "STT Default",
+            "direction": "stt",
+            "provider": "reazonspeech_k2",
+            "engine": "k2",
+            "defaults": {"language": "en"},
+        }
+        mp = ModelProfile.model_validate(data)
+        assert isinstance(mp.defaults, STTModelDefaults)
+        assert mp.defaults.language == "en"

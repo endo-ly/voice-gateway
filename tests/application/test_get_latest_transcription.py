@@ -30,4 +30,4 @@ class TestGetLatestTranscription:
         uc = GetLatestTranscription(store)
         result = uc.execute()
         assert result is not None
-        assert result.text == "test"
+        assert result[0].text == "test"

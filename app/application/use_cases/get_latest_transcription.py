@@ -8,5 +8,5 @@ class GetLatestTranscription:
     def __init__(self, transcription_store: TranscriptionStore) -> None:
         self._store = transcription_store
 
-    def execute(self) -> TranscriptionResult | None:
+    def execute(self) -> tuple[TranscriptionResult, str] | None:
         return self._store.get_latest()
