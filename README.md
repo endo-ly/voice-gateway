@@ -92,7 +92,7 @@ curl http://127.0.0.1:8012/health
 |--------|----------|-------------|
 | GET | `/health` | Health check |
 | GET | `/v1/models` | List available models |
-| GET | `/v1/voices` | List available voices |
+| GET | `/v1/voices` | List available voices (tts/all only) |
 
 ## Provider Support
 

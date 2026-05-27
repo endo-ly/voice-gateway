@@ -17,7 +17,7 @@ def _write_wav(path: Path, sample_rate: int = 16000, channels: int = 1, duration
         w.setnchannels(channels)
         w.setsampwidth(2)
         w.setframerate(sample_rate)
-        w.writeframes(b"\x00\x00" * n_frames)
+        w.writeframes(b"\x00\x00" * n_frames * channels)
 
 
 class TestInspectWav:

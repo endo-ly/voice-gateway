@@ -1,6 +1,7 @@
 """ReazonSpeech K2 STT provider."""
 
 import asyncio
+import threading
 from pathlib import Path
 
 from app.domain.errors import ModelNotLoadedError, TranscriptionFailedError
@@ -30,6 +31,7 @@ class ReazonSpeechK2Provider:
         self._preferred_sample_rate = preferred_sample_rate
         self._preferred_channels = preferred_channels
         self._model = None
+        self._load_lock = threading.Lock()
 
     def is_loaded(self) -> bool:
         return self._model is not None
@@ -48,16 +50,17 @@ class ReazonSpeechK2Provider:
         }
 
     def _load_model(self) -> None:
-        if self._model is not None:
-            return
-        try:
-            from reazonspeech.k2.asr import load_model
-        except ImportError as error:
-            raise ModelNotLoadedError(self._model_id) from error
-        try:
-            self._model = load_model(language=self._language)
-        except Exception as error:
-            raise ModelNotLoadedError(self._model_id) from error
+        with self._load_lock:
+            if self._model is not None:
+                return
+            try:
+                from reazonspeech.k2.asr import load_model
+            except ImportError as error:
+                raise ModelNotLoadedError(self._model_id) from error
+            try:
+                self._model = load_model(language=self._language)
+            except Exception as error:
+                raise ModelNotLoadedError(self._model_id) from error
 
     def _transcribe_sync(self, request: TranscriptionRequest) -> TranscriptionResult:
         path = Path(request.audio_path)

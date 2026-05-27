@@ -1,5 +1,7 @@
 """Models list route."""
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, Query
 
 from app.api.dependencies import get_model_repo
@@ -11,7 +13,7 @@ router = APIRouter()
 
 @router.get("/v1/models")
 async def list_models(
-    direction: str | None = Query(None, description="Filter by direction: tts or stt"),
+    direction: Literal["tts", "stt"] | None = Query(None, description="Filter by direction: tts or stt"),
     repo: YamlModelProfileRepository = Depends(get_model_repo),
 ) -> dict:
     uc = ListModels(model_repo=repo)

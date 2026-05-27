@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response
 
 from app.api.dependencies import get_stt_callback_timeout_ms, get_stt_callback_url, get_transcribe_audio
@@ -32,6 +32,9 @@ async def openai_transcriptions(
     callback_timeout_ms: int = Depends(get_stt_callback_timeout_ms),
 ) -> Response:
     try:
+        if response_format not in ("json", "text"):
+            raise HTTPException(status_code=400, detail=f"Unsupported response_format: {response_format}")
+
         data = await file.read()
         max_bytes = 25 * 1024 * 1024
         if len(data) > max_bytes:

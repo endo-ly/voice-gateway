@@ -1,5 +1,7 @@
 """Tests for InMemoryTranscriptionStore."""
 
+from datetime import datetime
+
 from app.domain.value_objects.transcription_result import TranscriptionResult
 from app.infrastructure.repositories.in_memory_transcription_store import InMemoryTranscriptionStore
 
@@ -44,10 +46,10 @@ class TestInMemoryTranscriptionStore:
         assert entry is not None
         ts = entry[1]
         assert ts != ""
-        assert "T" in ts or "Z" in ts
+        datetime.fromisoformat(ts.replace("Z", "+00:00"))
 
     def test_timestamp_set(self):
         store = InMemoryTranscriptionStore()
         store.set_latest(_make_result())
         assert store.timestamp is not None
-        assert "T" in store.timestamp or "Z" in store.timestamp
+        datetime.fromisoformat(store.timestamp.replace("Z", "+00:00"))

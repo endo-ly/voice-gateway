@@ -33,7 +33,12 @@ def inspect_wav(
             message="Invalid WAV file",
         ) from error
 
-    duration = frames / sample_rate if sample_rate > 0 else 0.0
+    if sample_rate <= 0:
+        raise AudioValidationError(
+            code="INVALID_AUDIO_FORMAT",
+            message="WAV file has invalid sample rate",
+        )
+    duration = frames / sample_rate
     if duration > max_audio_seconds:
         raise AudioTooLongError(max_seconds=max_audio_seconds, actual_seconds=duration)
 

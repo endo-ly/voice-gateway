@@ -33,6 +33,10 @@ class ModelProfile(BaseModel):
         defaults = data.get("defaults") or {}
 
         if isinstance(defaults, (TTSModelDefaults, STTModelDefaults)):
+            if isinstance(defaults, STTModelDefaults):
+                data["direction"] = "stt"
+            else:
+                data["direction"] = "tts"
             return data
 
         if direction == "stt":

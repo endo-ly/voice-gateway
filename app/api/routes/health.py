@@ -11,10 +11,13 @@ def _provider_status(registry, names):
     for name in names:
         try:
             provider = registry.get(name)
-            loaded = getattr(provider, "is_loaded", lambda: True)()
         except Exception:
-            loaded = False
-        status[name] = {"registered": True, "loaded": loaded}
+            provider = None
+        if provider is None:
+            status[name] = {"registered": False, "loaded": False}
+        else:
+            loaded = getattr(provider, "is_loaded", lambda: True)()
+            status[name] = {"registered": True, "loaded": loaded}
     return status
 
 

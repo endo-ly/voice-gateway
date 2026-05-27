@@ -1,6 +1,7 @@
 """Application settings loaded from environment variables."""
 
 from pathlib import Path, PureWindowsPath
+from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings
@@ -24,7 +25,7 @@ def _normalize_path(path: str, base_dir: str) -> str:
 class Settings(BaseSettings):
     project_root: str = str(_PROJECT_ROOT)
     log_level: str = "INFO"
-    mode: str = Field(default="all", validation_alias="VOICE_GATEWAY_MODE")
+    mode: Literal["tts", "stt", "all"] = Field(default="all", validation_alias="VOICE_GATEWAY_MODE")
     host: str = "127.0.0.1"
     port: int = 8012
     assets_dir: str = "assets"
@@ -57,6 +58,13 @@ class Settings(BaseSettings):
             self.irodori_repo_dir = _normalize_path(self.irodori_repo_dir, self.project_root)
         self.stt_vendor_dir = _normalize_path(self.stt_vendor_dir, self.project_root)
         return self
+
+    @field_validator("stt_callback_timeout_ms")
+    @classmethod
+    def validate_callback_timeout(cls, v):
+        if v <= 0:
+            raise ValueError("stt_callback_timeout_ms must be a positive integer")
+        return v
 
     model_config = {
         "env_prefix": "",

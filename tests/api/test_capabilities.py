@@ -18,9 +18,7 @@ class TestCapabilities:
         resp = await client.get("/v1/capabilities")
         assert resp.status_code == 200
         body = resp.json()
-        assert "tts" in body
-        assert "stt" in body
-        assert "enabled" in body["tts"]
-        assert "enabled" in body["stt"]
-        assert "providers" in body["tts"]
-        assert "providers" in body["stt"]
+        assert isinstance(body["tts"]["enabled"], bool)
+        assert isinstance(body["stt"]["enabled"], bool)
+        assert isinstance(body["tts"]["providers"], list)
+        assert isinstance(body["stt"]["providers"], list)

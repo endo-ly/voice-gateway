@@ -8,7 +8,7 @@ class TestTranscriptionRequest:
     def test_valid_request(self):
         req = TranscriptionRequest(
             model_id="stt-default",
-            audio_path="/tmp/test.wav",
+            audio_path="dummy.wav",
             language="ja",
             provider="reazonspeech_k2",
             engine="k2",
@@ -19,7 +19,7 @@ class TestTranscriptionRequest:
     def test_default_language(self):
         req = TranscriptionRequest(
             model_id="stt-default",
-            audio_path="/tmp/test.wav",
+            audio_path="dummy.wav",
             provider="reazonspeech_k2",
             engine="k2",
         )
@@ -28,7 +28,7 @@ class TestTranscriptionRequest:
     def test_with_provider_config(self):
         req = TranscriptionRequest(
             model_id="stt-default",
-            audio_path="/tmp/test.wav",
+            audio_path="dummy.wav",
             provider="reazonspeech_k2",
             engine="k2",
             provider_config={"model_id": "reazon-research/reazonspeech-k2-v2"},

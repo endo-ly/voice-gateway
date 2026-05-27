@@ -53,7 +53,7 @@
 
 ### 共通化するもの（外枠）
 
-```
+```text
 HTTPエラー形式
 設定読み込み (pydantic-settings)
 ModelProfileRepository
@@ -66,7 +66,7 @@ logging
 
 ### 分けるもの（ドメイン動詞）
 
-```
+```text
 TTSのvoice解決          ← STTはvoice概念を持たない
 STTのaudio validation   ← TTSはaudio受信を持たない
 TTS Provider Protocol   ← synthesize()
@@ -113,7 +113,7 @@ STT/TTSは必ず別環境で起動する必要はない。
 
 ## 統合後のディレクトリ構成
 
-```
+```text
 voice-gateway/
 ├── app/
 │   ├── __init__.py
@@ -605,8 +605,9 @@ Routesは `VOICE_GATEWAY_MODE` に応じて登録される:
 
 | mode | 登録されるroutes |
 |------|---------------|
-| `tts` | health, models, voices, openai_speech, native_speech |
-| `stt` | health, models, capabilities, openai_transcriptions, transcriptions, transcriptions_latest |
+| 共通 | health, models, capabilities |
+| `tts` | voices, openai_speech, native_speech |
+| `stt` | openai_transcriptions, transcriptions, transcriptions_latest |
 | `all` | 全routes |
 
 #### 共通
@@ -615,6 +616,7 @@ Routesは `VOICE_GATEWAY_MODE` に応じて登録される:
 |--------|------|------|
 | GET | `/health` | ヘルスチェック (mode + providers状態を含む) |
 | GET | `/v1/models` | model一覧 (`direction` フィルタ + レスポンスに`direction`フィールド含む) |
+| GET | `/v1/capabilities` | 機能判定 (tts/stt enabled/providers) |
 
 #### TTS (mode=tts/all)
 
@@ -654,7 +656,7 @@ async def openai_transcriptions(
 
 OpenAI互換側は薄く保ち、詳細情報（`processingMs`, `audio`等）はNative側に寄せる。
 
-```
+```text
 /v1/audio/transcriptions  # OpenAI互換: file, model, language, response_format, prompt
 /v1/transcribe            # Native: file, model, source, emit_event, callback
 ```
@@ -869,7 +871,7 @@ uv sync --group dev --extra reazonspeech-k2
 
 ### .vendor/ の扱い
 
-```
+```text
 voice-gateway/
 ├── .vendor/                             # .gitignore
 │   └── reazonspeech-k2/                 # ミニPCのみ
@@ -1095,7 +1097,7 @@ class ModelProfile(BaseModel):
 
 **緩和策**: 設計原則「共通化するのは外枠、分けるのはドメイン動詞」を厳守する。
 
-```
+```text
 共通化: HTTPエラー形式、設定読み込み、ModelProfileRepository、起動mode制御、
         health/capabilities、tmp管理、logging、テスト基盤
 

@@ -105,7 +105,10 @@ if _mode in ("stt", "all"):
     configured_stt_providers = {m.provider for m in stt_models}
 
     if "reazonspeech_k2" in configured_stt_providers:
-        stt_model = stt_models[0]
+        reazonspeech_models = [m for m in stt_models if m.provider == "reazonspeech_k2"]
+        if not reazonspeech_models:
+            raise RuntimeError("No reazonspeech_k2 model found in models.yaml despite being in configured providers")
+        stt_model = reazonspeech_models[0]
         defaults = stt_model.defaults
         _stt_registry.register(
             ReazonSpeechK2Provider(

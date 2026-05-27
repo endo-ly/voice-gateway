@@ -27,9 +27,9 @@ class VoiceBindingNotFoundError(VoiceGatewayError):
 
 
 class UnsupportedResponseFormatError(VoiceGatewayError):
-    def __init__(self, format: str) -> None:
-        self.format = format
-        super().__init__(f"Unsupported response format: {format}")
+    def __init__(self, response_format: str) -> None:
+        self.format = response_format
+        super().__init__(f"Unsupported response format: {response_format}")
 
 
 class UnsupportedSpeedError(VoiceGatewayError):

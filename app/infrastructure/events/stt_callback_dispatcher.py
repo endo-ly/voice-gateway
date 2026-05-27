@@ -3,6 +3,7 @@
 import json
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 from app.domain.value_objects.transcription_result import TranscriptionResult
@@ -28,6 +29,13 @@ def dispatch_stt_callbacks(
         return CallbackWarning(
             callback_name="unknown",
             message="callback url is empty",
+        )
+
+    parsed = urlparse(callback_url)
+    if parsed.scheme not in ("http", "https"):
+        return CallbackWarning(
+            callback_name="stt_callback",
+            message=f"callback url scheme not allowed: {parsed.scheme}",
         )
 
     payload = json.dumps(result.model_dump()).encode("utf-8")

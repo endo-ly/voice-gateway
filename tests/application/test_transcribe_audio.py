@@ -62,7 +62,10 @@ class FakeSTTProvider:
 
 
 class TestTranscribeAudio:
-    async def test_execute_returns_result(self):
+    async def test_execute_returns_result(self, tmp_path):
+        wav = tmp_path / "test.wav"
+        wav.write_bytes(b"\x00")
+
         model = _make_stt_model()
         repo = FakeModelRepo([model])
         registry = STTProviderRegistry()
@@ -74,12 +77,15 @@ class TestTranscribeAudio:
             provider_registry=registry,
             transcription_store=store,
         )
-        result = await uc.execute(model_id="stt-default", audio_path="/tmp/test.wav")
+        result = await uc.execute(model_id="stt-default", audio_path=str(wav))
         assert result.text == "fake transcription"
         assert result.source == "unknown"
         assert result.processing_ms >= 0
 
-    async def test_execute_stores_result(self):
+    async def test_execute_stores_result(self, tmp_path):
+        wav = tmp_path / "test.wav"
+        wav.write_bytes(b"\x00")
+
         model = _make_stt_model()
         repo = FakeModelRepo([model])
         registry = STTProviderRegistry()
@@ -91,11 +97,14 @@ class TestTranscribeAudio:
             provider_registry=registry,
             transcription_store=store,
         )
-        await uc.execute(model_id="stt-default", audio_path="/tmp/test.wav", source="test")
+        await uc.execute(model_id="stt-default", audio_path=str(wav), source="test")
         assert store.get_latest() is not None
         assert store.get_latest()[0].source == "test"
 
-    async def test_execute_without_store(self):
+    async def test_execute_without_store(self, tmp_path):
+        wav = tmp_path / "test.wav"
+        wav.write_bytes(b"\x00")
+
         model = _make_stt_model()
         repo = FakeModelRepo([model])
         registry = STTProviderRegistry()
@@ -105,10 +114,13 @@ class TestTranscribeAudio:
             profile_resolver=STTProfileResolver(ModelResolver(repo)),
             provider_registry=registry,
         )
-        result = await uc.execute(model_id="stt-default", audio_path="/tmp/test.wav")
+        result = await uc.execute(model_id="stt-default", audio_path=str(wav))
         assert result.text == "fake transcription"
 
-    async def test_execute_with_language(self):
+    async def test_execute_with_language(self, tmp_path):
+        wav = tmp_path / "test.wav"
+        wav.write_bytes(b"\x00")
+
         model = _make_stt_model()
         repo = FakeModelRepo([model])
         registry = STTProviderRegistry()
@@ -118,5 +130,5 @@ class TestTranscribeAudio:
             profile_resolver=STTProfileResolver(ModelResolver(repo)),
             provider_registry=registry,
         )
-        result = await uc.execute(model_id="stt-default", audio_path="/tmp/test.wav", language="en")
+        result = await uc.execute(model_id="stt-default", audio_path=str(wav), language="en")
         assert result.language == "en"

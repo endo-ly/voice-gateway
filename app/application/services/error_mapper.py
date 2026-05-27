@@ -42,7 +42,7 @@ class ErrorMapper:
                 return status, {
                     "error": {
                         "message": str(error),
-                        "type": "invalid_request_error",
+                        "type": "server_error" if status >= 500 else "invalid_request_error",
                         "param": param,
                         "code": code,
                     }

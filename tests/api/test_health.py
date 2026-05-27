@@ -24,6 +24,7 @@ class TestHealth:
 
     async def test_health_providers_have_registered_and_loaded(self, client):
         resp = await client.get("/health")
+        assert resp.status_code == 200
         body = resp.json()
         providers = body["providers"]
         for direction in ("tts", "stt"):
