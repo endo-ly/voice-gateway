@@ -1,27 +1,27 @@
-"""Tests for ProviderRegistry."""
+"""Tests for TTSProviderRegistry."""
 
 import pytest
 
 from app.domain.errors import ProviderNotFoundError
-from app.application.services.provider_registry import ProviderRegistry
+from app.application.services.tts_provider_registry import TTSProviderRegistry
 from app.infrastructure.providers.fake.provider import FakeProvider
 
 
-class TestProviderRegistry:
+class TestTTSProviderRegistry:
     def test_register_and_resolve(self):
-        registry = ProviderRegistry()
+        registry = TTSProviderRegistry()
         fake = FakeProvider()
         registry.register(fake)
         assert registry.get("fake") is fake
 
     def test_unknown_provider_raises(self):
-        registry = ProviderRegistry()
+        registry = TTSProviderRegistry()
         with pytest.raises(ProviderNotFoundError) as exc_info:
             registry.get("nonexistent")
         assert exc_info.value.provider == "nonexistent"
 
     def test_register_multiple(self):
-        registry = ProviderRegistry()
+        registry = TTSProviderRegistry()
         fake1 = FakeProvider()
         fake1.provider_name = "alpha"
         fake2 = FakeProvider()
@@ -32,7 +32,7 @@ class TestProviderRegistry:
         assert registry.get("beta") is fake2
 
     def test_overwrite_existing(self):
-        registry = ProviderRegistry()
+        registry = TTSProviderRegistry()
         fake1 = FakeProvider()
         fake2 = FakeProvider()
         registry.register(fake1)

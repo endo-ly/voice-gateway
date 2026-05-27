@@ -9,7 +9,7 @@ from app.api.dependencies import get_synthesize_speech
 from app.api.schemas.openai_speech import OpenAISpeechRequest
 from app.application.services.error_mapper import ErrorMapper
 from app.application.use_cases.synthesize_speech import SynthesizeSpeech
-from app.domain.errors import TTSAdapterError
+from app.domain.errors import VoiceGatewayError
 
 router = APIRouter()
 
@@ -31,7 +31,7 @@ async def openai_speech(
             content=result.audio_bytes,
             media_type=result.media_type,
         )
-    except TTSAdapterError as e:
+    except VoiceGatewayError as e:
         status, body = ErrorMapper.map(e)
         return Response(
             content=json.dumps(body),

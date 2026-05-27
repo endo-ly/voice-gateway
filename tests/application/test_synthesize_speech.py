@@ -2,8 +2,9 @@
 
 import pytest
 
-from app.application.services.profile_resolver import ProfileResolver
-from app.application.services.provider_registry import ProviderRegistry
+from app.application.services.model_resolver import ModelResolver
+from app.application.services.tts_profile_resolver import TTSProfileResolver
+from app.application.services.tts_provider_registry import TTSProviderRegistry
 from app.application.use_cases.synthesize_speech import SynthesizeSpeech
 from app.domain.errors import UnsupportedResponseFormatError, UnsupportedSpeedError
 from app.infrastructure.providers.fake.provider import FakeProvider
@@ -42,9 +43,9 @@ def _setup_fixtures(tmp_path):
 
     model_repo = YamlModelProfileRepository(yaml_path=str(models_yaml))
     voice_repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
-    resolver = ProfileResolver(model_repo=model_repo, voice_repo=voice_repo)
+    resolver = TTSProfileResolver(model_resolver=ModelResolver(model_repo), voice_repo=voice_repo)
 
-    registry = ProviderRegistry()
+    registry = TTSProviderRegistry()
     registry.register(FakeProvider())
 
     return SynthesizeSpeech(

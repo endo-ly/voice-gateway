@@ -17,4 +17,19 @@ class TestHealth:
     async def test_health_returns_200_ok(self, client):
         resp = await client.get("/health")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "ok"}
+        body = resp.json()
+        assert body["status"] == "ok"
+        assert "mode" in body
+        assert "providers" in body
+
+    async def test_health_providers_have_registered_and_loaded(self, client):
+        resp = await client.get("/health")
+        assert resp.status_code == 200
+        body = resp.json()
+        providers = body["providers"]
+        for direction in ("tts", "stt"):
+            entry = providers[direction]
+            if entry["enabled"]:
+                for _name, info in entry["providers"].items():
+                    assert "registered" in info
+                    assert "loaded" in info

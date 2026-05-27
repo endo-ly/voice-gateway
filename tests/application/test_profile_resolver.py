@@ -1,10 +1,11 @@
-"""Tests for ProfileResolver."""
+"""Tests for TTSProfileResolver."""
 
 import pytest
 
 from app.domain.errors import ModelNotFoundError, VoiceNotFoundError, VoiceBindingNotFoundError
+from app.application.services.model_resolver import ModelResolver
 from app.application.services.option_merger import OptionMerger
-from app.application.services.profile_resolver import ProfileResolver
+from app.application.services.tts_profile_resolver import TTSProfileResolver
 from app.infrastructure.repositories.yaml_model_profile_repository import YamlModelProfileRepository
 from app.infrastructure.repositories.yaml_voice_profile_repository import YamlVoiceProfileRepository
 
@@ -17,7 +18,7 @@ def _write_yaml(path: str, data: dict) -> None:
         yaml.dump(data, f, default_flow_style=False)
 
 
-class TestProfileResolver:
+class TestTTSProfileResolver:
     def test_resolve_returns_merged_config(self, tmp_path):
         models_yaml = tmp_path / "models.yaml"
         _write_yaml(str(models_yaml), {
@@ -47,7 +48,7 @@ class TestProfileResolver:
 
         model_repo = YamlModelProfileRepository(yaml_path=str(models_yaml))
         voice_repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
-        resolver = ProfileResolver(model_repo=model_repo, voice_repo=voice_repo)
+        resolver = TTSProfileResolver(model_resolver=ModelResolver(model_repo), voice_repo=voice_repo)
 
         model, voice, config = resolver.resolve("tts-default", "egopulse")
         assert model.id == "tts-default"
@@ -64,7 +65,7 @@ class TestProfileResolver:
 
         model_repo = YamlModelProfileRepository(yaml_path=str(models_yaml))
         voice_repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
-        resolver = ProfileResolver(model_repo=model_repo, voice_repo=voice_repo)
+        resolver = TTSProfileResolver(model_resolver=ModelResolver(model_repo), voice_repo=voice_repo)
 
         with pytest.raises(ModelNotFoundError):
             resolver.resolve("nonexistent", "egopulse")
@@ -79,7 +80,7 @@ class TestProfileResolver:
 
         model_repo = YamlModelProfileRepository(yaml_path=str(models_yaml))
         voice_repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
-        resolver = ProfileResolver(model_repo=model_repo, voice_repo=voice_repo)
+        resolver = TTSProfileResolver(model_resolver=ModelResolver(model_repo), voice_repo=voice_repo)
 
         with pytest.raises(VoiceNotFoundError):
             resolver.resolve("tts-default", "nonexistent")
@@ -101,7 +102,7 @@ class TestProfileResolver:
 
         model_repo = YamlModelProfileRepository(yaml_path=str(models_yaml))
         voice_repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
-        resolver = ProfileResolver(model_repo=model_repo, voice_repo=voice_repo)
+        resolver = TTSProfileResolver(model_resolver=ModelResolver(model_repo), voice_repo=voice_repo)
 
         with pytest.raises(VoiceBindingNotFoundError) as exc_info:
             resolver.resolve("tts-default", "egopulse")
@@ -137,7 +138,7 @@ class TestProfileResolver:
 
         model_repo = YamlModelProfileRepository(yaml_path=str(models_yaml))
         voice_repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
-        resolver = ProfileResolver(model_repo=model_repo, voice_repo=voice_repo)
+        resolver = TTSProfileResolver(model_resolver=ModelResolver(model_repo), voice_repo=voice_repo)
 
         _, _, config = resolver.resolve(
             "tts-default", "egopulse",
@@ -175,7 +176,7 @@ class TestProfileResolver:
 
         model_repo = YamlModelProfileRepository(yaml_path=str(models_yaml))
         voice_repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
-        resolver = ProfileResolver(model_repo=model_repo, voice_repo=voice_repo)
+        resolver = TTSProfileResolver(model_resolver=ModelResolver(model_repo), voice_repo=voice_repo)
 
         _, _, config = resolver.resolve("tts-default", "egopulse")
         assert config["seed"] == 42

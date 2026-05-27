@@ -3,18 +3,19 @@
 import pytest
 from pydantic import ValidationError
 
-from app.domain.entities.model_profile import ModelDefaults, ModelProfile
+from app.domain.entities.model_profile import TTSModelDefaults, ModelProfile
+from app.domain.entities.stt_model_defaults import STTModelDefaults
 
 
-class TestModelDefaults:
+class TestTTSModelDefaults:
     def test_default_values(self):
-        d = ModelDefaults()
+        d = TTSModelDefaults()
         assert d.response_format == "wav"
         assert d.speed == 1.0
         assert d.timeout_sec == 120
 
     def test_custom_values(self):
-        d = ModelDefaults(response_format="wav", speed=1.0, timeout_sec=60)
+        d = TTSModelDefaults(response_format="wav", speed=1.0, timeout_sec=60)
         assert d.timeout_sec == 60
 
 
@@ -38,7 +39,7 @@ class TestModelProfile:
             display_name="Default TTS",
             provider="irodori",
             engine="base",
-            defaults=ModelDefaults(response_format="wav", speed=1.0, timeout_sec=120),
+            defaults=TTSModelDefaults(response_format="wav", speed=1.0, timeout_sec=120),
             provider_config={
                 "checkpoint": "Aratako/Irodori-TTS-500M-v2",
                 "model_device": "cuda",
@@ -108,3 +109,25 @@ class TestModelProfile:
         assert mp.provider == "irodori"
         assert mp.defaults.timeout_sec == 120
         assert mp.provider_config["model_device"] == "cuda"
+
+    def test_tts_dict_defaults_produces_tts_model_defaults(self):
+        mp = ModelProfile(
+            id="test",
+            display_name="Test",
+            provider="fake",
+            engine="base",
+            defaults={"response_format": "mp3", "speed": 1.5, "timeout_sec": 60},
+        )
+        assert isinstance(mp.defaults, TTSModelDefaults)
+        assert mp.defaults.response_format == "mp3"
+        assert mp.defaults.speed == 1.5
+
+    def test_no_defaults_key_produces_tts_model_defaults(self):
+        mp = ModelProfile(
+            id="test",
+            display_name="Test",
+            provider="fake",
+            engine="base",
+        )
+        assert isinstance(mp.defaults, TTSModelDefaults)
+        assert mp.defaults.response_format == "wav"

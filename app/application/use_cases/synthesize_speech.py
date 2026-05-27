@@ -1,7 +1,7 @@
 """Synthesize speech use case."""
 
-from app.application.services.profile_resolver import ProfileResolver
-from app.application.services.provider_registry import ProviderRegistry
+from app.application.services.tts_profile_resolver import TTSProfileResolver
+from app.application.services.tts_provider_registry import TTSProviderRegistry
 from app.domain.errors import UnsupportedResponseFormatError, UnsupportedSpeedError
 from app.domain.value_objects.synthesis_request import ProviderSynthesisRequest
 from app.domain.value_objects.synthesis_result import SynthesisResult
@@ -10,8 +10,8 @@ from app.domain.value_objects.synthesis_result import SynthesisResult
 class SynthesizeSpeech:
     def __init__(
         self,
-        profile_resolver: ProfileResolver,
-        provider_registry: ProviderRegistry,
+        profile_resolver: TTSProfileResolver,
+        provider_registry: TTSProviderRegistry,
     ) -> None:
         self._resolver = profile_resolver
         self._registry = provider_registry

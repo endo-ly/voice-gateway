@@ -1,8 +1,9 @@
 """Application settings loaded from environment variables."""
 
 from pathlib import Path, PureWindowsPath
+from typing import Literal
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -24,6 +25,7 @@ def _normalize_path(path: str, base_dir: str) -> str:
 class Settings(BaseSettings):
     project_root: str = str(_PROJECT_ROOT)
     log_level: str = "INFO"
+    mode: Literal["tts", "stt", "all"] = Field(default="all", validation_alias="VOICE_GATEWAY_MODE")
     host: str = "127.0.0.1"
     port: int = 8012
     assets_dir: str = "assets"
@@ -32,7 +34,12 @@ class Settings(BaseSettings):
     max_concurrency: int = 1
     irodori_repo_dir: str | None = None
 
-    @field_validator("project_root", "assets_dir", "tmp_dir", "irodori_repo_dir", mode="before")
+    # ── STT ──
+    stt_vendor_dir: str = ".vendor"
+    stt_callback_url: str | None = None
+    stt_callback_timeout_ms: int = 3000
+
+    @field_validator("project_root", "assets_dir", "tmp_dir", "irodori_repo_dir", "stt_vendor_dir", mode="before")
     @classmethod
     def reject_escaped_path_control_chars(cls, value: str | None) -> str | None:
         if isinstance(value, str) and any(c in value for c in _CONTROL_CHARS):
@@ -49,7 +56,15 @@ class Settings(BaseSettings):
         self.tmp_dir = _normalize_path(self.tmp_dir, self.project_root)
         if self.irodori_repo_dir:
             self.irodori_repo_dir = _normalize_path(self.irodori_repo_dir, self.project_root)
+        self.stt_vendor_dir = _normalize_path(self.stt_vendor_dir, self.project_root)
         return self
+
+    @field_validator("stt_callback_timeout_ms")
+    @classmethod
+    def validate_callback_timeout(cls, v):
+        if v <= 0:
+            raise ValueError("stt_callback_timeout_ms must be a positive integer")
+        return v
 
     model_config = {
         "env_prefix": "",

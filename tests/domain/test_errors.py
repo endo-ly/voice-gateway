@@ -6,7 +6,7 @@ from app.domain.errors import (
     ProviderExecutionError,
     ProviderNotFoundError,
     ProviderTimeoutError,
-    TTSAdapterError,
+    VoiceGatewayError,
     UnsupportedResponseFormatError,
     UnsupportedSpeedError,
     VoiceBindingNotFoundError,
@@ -14,12 +14,12 @@ from app.domain.errors import (
 )
 
 
-class TestTTSAdapterErrorBase:
+class TestVoiceGatewayErrorBase:
     def test_inherits_exception(self):
-        assert issubclass(TTSAdapterError, Exception)
+        assert issubclass(VoiceGatewayError, Exception)
 
     def test_can_construct_with_message(self):
-        err = TTSAdapterError("something broke")
+        err = VoiceGatewayError("something broke")
         assert str(err) == "something broke"
 
 
@@ -33,7 +33,7 @@ class TestModelNotFoundError:
         assert "bad-model" in str(err)
 
     def test_inherits_base(self):
-        assert issubclass(ModelNotFoundError, TTSAdapterError)
+        assert issubclass(ModelNotFoundError, VoiceGatewayError)
 
 
 class TestVoiceNotFoundError:
@@ -46,7 +46,7 @@ class TestVoiceNotFoundError:
         assert "bad-voice" in str(err)
 
     def test_inherits_base(self):
-        assert issubclass(VoiceNotFoundError, TTSAdapterError)
+        assert issubclass(VoiceNotFoundError, VoiceGatewayError)
 
 
 class TestVoiceBindingNotFoundError:
@@ -62,7 +62,7 @@ class TestVoiceBindingNotFoundError:
         assert "qwen-tts" in msg
 
     def test_inherits_base(self):
-        assert issubclass(VoiceBindingNotFoundError, TTSAdapterError)
+        assert issubclass(VoiceBindingNotFoundError, VoiceGatewayError)
 
 
 class TestUnsupportedResponseFormatError:
@@ -75,7 +75,7 @@ class TestUnsupportedResponseFormatError:
         assert "mp3" in str(err)
 
     def test_inherits_base(self):
-        assert issubclass(UnsupportedResponseFormatError, TTSAdapterError)
+        assert issubclass(UnsupportedResponseFormatError, VoiceGatewayError)
 
 
 class TestUnsupportedSpeedError:
@@ -88,7 +88,7 @@ class TestUnsupportedSpeedError:
         assert "2.0" in str(err)
 
     def test_inherits_base(self):
-        assert issubclass(UnsupportedSpeedError, TTSAdapterError)
+        assert issubclass(UnsupportedSpeedError, VoiceGatewayError)
 
 
 class TestProviderNotFoundError:
@@ -101,7 +101,7 @@ class TestProviderNotFoundError:
         assert "unknown" in str(err)
 
     def test_inherits_base(self):
-        assert issubclass(ProviderNotFoundError, TTSAdapterError)
+        assert issubclass(ProviderNotFoundError, VoiceGatewayError)
 
 
 class TestProviderExecutionError:
@@ -117,7 +117,7 @@ class TestProviderExecutionError:
         assert "exit code 1" in msg
 
     def test_inherits_base(self):
-        assert issubclass(ProviderExecutionError, TTSAdapterError)
+        assert issubclass(ProviderExecutionError, VoiceGatewayError)
 
 
 class TestProviderTimeoutError:
@@ -130,7 +130,7 @@ class TestProviderTimeoutError:
         assert "irodori" in str(err)
 
     def test_inherits_base(self):
-        assert issubclass(ProviderTimeoutError, TTSAdapterError)
+        assert issubclass(ProviderTimeoutError, VoiceGatewayError)
 
 
 class TestInvalidProfileError:
@@ -139,4 +139,4 @@ class TestInvalidProfileError:
         assert "bad yaml" in str(err)
 
     def test_inherits_base(self):
-        assert issubclass(InvalidProfileError, TTSAdapterError)
+        assert issubclass(InvalidProfileError, VoiceGatewayError)
