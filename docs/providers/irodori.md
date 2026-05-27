@@ -1,17 +1,17 @@
 # Irodori-TTS Provider
 
 [Irodori-TTS](https://github.com/Aratako/Irodori-TTS) をバックエンドとして利用するProviderの内部仕様。
-tts-adapterがIrodoriをどのように呼び出しているかを説明する。
+voice-gatewayがIrodoriをどのように呼び出しているかを説明する。
 
 ## 呼び出し方式
 
 Irodoriは **CLIサブプロセス** として呼び出す。HTTP APIでもPythonライブラリの直接importでもない。
 
-tts-adapterは `IRODORI_REPO_DIR` を `cwd` にして `uv run python infer.py` を実行する。
+voice-gatewayは `IRODORI_REPO_DIR` を `cwd` にして `uv run python infer.py` を実行する。
 Irodori-TTSリポジトリの `infer.py` が実際の推論を行い、結果をWAVファイルに書き出す。
 
 ```
-tts-adapter (IrodoriProvider)
+voice-gateway (IrodoriProvider)
   │
   │  cwd = $IRODORI_REPO_DIR
   │  argv = ["uv", "run", "python", "infer.py", "--hf-checkpoint", ...]
@@ -21,7 +21,7 @@ Irodori-TTS/infer.py
   │ 推論を実行
   │ --output-wav で指定したパスにWAVを書き出す
   ▼
-tts-adapter
+voice-gateway
   │ WAVを読み込んでbytesとして返す
   │ tmpファイルを削除
   ▼
@@ -189,7 +189,7 @@ uv run python -m app.cli voices materialize-ref-latents \
 変換時は `scripts/irodori_encode_latent.py` というブリッジスクリプトをIrodori環境内で実行する。
 
 ```
-tts-adapter (IrodoriLatentEncoder)
+voice-gateway (IrodoriLatentEncoder)
   │
   │  cwd = $IRODORI_REPO_DIR
   │  argv = ["uv", "run", "python", "scripts/irodori_encode_latent.py", ...]

@@ -1,17 +1,38 @@
 # 拡張ガイド
 
-tts-adapterに新しいProvider、Voice、Modelを追加する手順。
+voice-gatewayに新しいProvider、Voice、Modelを追加する手順。
 
 ## 目次
 
-1. [Providerの追加](#providerの追加)
-2. [Voiceの追加](#voiceの追加)
-3. [Modelの追加](#modelの追加)
-4. [拡張チェックリスト](#拡張チェックリスト)
+1. [共通の前提](#共通の前提)
+2. [TTS Providerの追加](#tts-providerの追加)
+3. [STT Providerの追加](#stt-providerの追加)
+4. [Voiceの追加](#voiceの追加)
+5. [Modelの追加](#modelの追加)
+6. [拡張チェックリスト](#拡張チェックリスト)
 
 ---
 
-## Providerの追加
+## 共通の前提
+
+### direction
+
+Modelには `direction` フィールド（`"tts"` または `"stt"`）が必須。これにより:
+
+- `defaults` のスキーマが切り替わる（`TTSModelDefaults` / `STTModelDefaults`）
+- モード分岐でどのRegistryに登録されるかが決まる
+- API層でルートが有効になるかが決まる
+
+### Provider Protocols
+
+| 方向 | Protocol | メソッド |
+|------|----------|---------|
+| TTS | `TTSProvider` | `async def synthesize(request: ProviderSynthesisRequest) -> SynthesisResult` |
+| STT | `STTProvider` | `async def transcribe(request: TranscriptionRequest) -> TranscriptionResult` |
+
+---
+
+## TTS Providerの追加
 
 新しいTTSエンジンをProviderとして追加する。
 
@@ -45,23 +66,24 @@ class QwenTTSProvider:
 
 ### Step 2: main.pyに登録
 
-`app/main.py` の `_provider_registry` に追加:
+`app/main.py` のTTS Provider登録セクション（`if _mode in ("tts", "all"):` 内）に追加:
 
 ```python
 from app.infrastructure.providers.qwen_tts.provider import QwenTTSProvider
 
-# 既存の登録箇所に追加
-_provider_registry.register(QwenTTSProvider())
+if "qwen_tts" in configured_tts_providers:
+    _tts_registry.register(QwenTTSProvider())
 ```
 
 ### Step 3: Model Profileを追加
 
-`assets/models/models.yaml` に新しいmodelを追加:
+`assets/models/models.yaml` に新しいmodelを追加（`direction: tts`）:
 
 ```yaml
 models:
   # 既存のmodel...
   - id: qwen-default
+    direction: tts
     object: model
     display_name: Qwen TTS Default
     provider: qwen_tts        # provider_nameと一致させる
@@ -71,7 +93,6 @@ models:
       speed: 1.0
       timeout_sec: 120
     provider_config:
-      # QwenTTSProviderが必要とする設定
       model_name: Qwen/Qwen2.5-TTS
       device: cuda
 ```
@@ -85,7 +106,6 @@ bindings:
   # 既存のbinding...
   qwen-default:
     provider_config:
-      # QwenTTSProviderが必要とするvoice固有設定
       speaker: "female_01"
       seed: 42
 ```
@@ -97,9 +117,86 @@ bindings:
 
 ---
 
+## STT Providerの追加
+
+新しいSTTエンジンをProviderとして追加する。
+
+### Step 1: Providerクラスを実装
+
+`app/infrastructure/providers/<provider_name>/provider.py` を作成:
+
+```python
+from app.domain.value_objects.transcription_request import TranscriptionRequest
+from app.domain.value_objects.transcription_result import TranscriptionResult
+
+
+class WhisperProvider:
+    provider_name: str = "whisper"
+
+    async def transcribe(
+        self, request: TranscriptionRequest
+    ) -> TranscriptionResult:
+        # request.audio_bytes に音声データが入っている
+        # request.provider_config にProvider固有の設定が入っている
+        # 実装...
+        return TranscriptionResult(
+            text="転写結果",
+            language="ja",
+            duration_sec=5.0,
+            processing_ms=1200,
+        )
+```
+
+満たすべき制約:
+- `provider_name` 属性を持つ
+- `async def transcribe(self, request: TranscriptionRequest) -> TranscriptionResult` を実装する
+- `TranscriptionResult` の `duration_sec` と `processing_ms` は `>= 0`
+- 音声バリデーションが必要な場合は専用のvalidatorモジュールを用意する
+
+### Step 2: main.pyに登録
+
+`app/main.py` のSTT Provider登録セクション（`if _mode in ("stt", "all"):` 内）に追加:
+
+```python
+from app.infrastructure.providers.whisper.provider import WhisperProvider
+
+if "whisper" in configured_stt_providers:
+    whisper_models = [m for m in stt_models if m.provider == "whisper"]
+    whisper_model = whisper_models[0]
+    _stt_registry.register(WhisperProvider(...))
+```
+
+### Step 3: Model Profileを追加
+
+`assets/models/models.yaml` に新しいmodelを追加（`direction: stt`）:
+
+```yaml
+models:
+  # 既存のmodel...
+  - id: stt-whisper
+    direction: stt
+    object: model
+    display_name: Whisper Large v3
+    provider: whisper
+    engine: large
+    defaults:
+      language: ja
+      max_audio_seconds: 60
+      timeout_sec: 120
+    provider_config:
+      model_id: openai/whisper-large-v3
+```
+
+### Step 4: テストを追加
+
+1. `tests/infrastructure/whisper/test_provider.py` — Provider単体テスト
+2. STT系のAPIテスト・統合テストに新しいmodelのケースを追加
+
+---
+
 ## Voiceの追加
 
-新しい声を追加する。以下では `your-voice-name` を例にしているため、実運用では任意のvoice IDに置き換える。
+新しい声を追加する（TTSのみ）。以下では `your-voice-name` を例にしているため、実運用では任意のvoice IDに置き換える。
 
 ### Step 1: ディレクトリを作成
 
@@ -169,6 +266,7 @@ curl -X POST http://127.0.0.1:8012/v1/audio/speech \
 models:
   # 既存...
   - id: irodori-high-quality
+    direction: tts
     object: model
     display_name: Irodori High Quality
     provider: irodori
@@ -185,9 +283,9 @@ models:
       codec_precision: fp32
 ```
 
-### Step 2: 各voiceにbindingを追加
+### Step 2: 各voiceにbindingを追加（TTSの場合）
 
-新しいmodel_idに対応するbindingを各voiceの `profile.yaml` に追加する。
+新しいmodel_idに対応するbindingを各voiceの `profile.yaml` に追加する。STT modelの場合はbinding不要。
 
 ### Step 3: 動作確認
 
@@ -201,13 +299,24 @@ curl http://127.0.0.1:8012/v1/models | jq '.data[] | select(.id=="irodori-high-q
 
 新規追加時の確認項目。
 
-### Provider追加
+### TTS Provider追加
 
 - [ ] `TTSProvider` Protocolを満たすクラスを実装した
 - [ ] `provider_name` 属性を設定した
 - [ ] `synthesize` が `SynthesisResult` を返す
 - [ ] tmpファイルを使う場合、bytes読み込み後に削除する
-- [ ] `main.py` で `_provider_registry.register()` した
+- [ ] `main.py` のTTSセクションで `_tts_registry.register()` した
+- [ ] 単体テストを書いた
+- [ ] 既存テストが全て通る
+
+### STT Provider追加
+
+- [ ] `STTProvider` Protocolを満たすクラスを実装した
+- [ ] `provider_name` 属性を設定した
+- [ ] `transcribe` が `TranscriptionResult` を返す
+- [ ] `duration_sec` と `processing_ms` が `>= 0` である
+- [ ] 音声バリデーションを検討した
+- [ ] `main.py` のSTTセクションで `_stt_registry.register()` した
 - [ ] 単体テストを書いた
 - [ ] 既存テストが全て通る
 
@@ -223,6 +332,7 @@ curl http://127.0.0.1:8012/v1/models | jq '.data[] | select(.id=="irodori-high-q
 ### Model追加
 
 - [ ] `models.yaml` にエントリを追加した
+- [ ] `direction` を正しく設定した（`tts` / `stt`）
 - [ ] `provider` が登録済みの `provider_name` と一致する
-- [ ] 全voiceにbindingを追加した（またはbindingなしで409を許容する）
+- [ ] TTS model: 全voiceにbindingを追加した（またはbindingなしで409を許容する）
 - [ ] `GET /v1/models` に表示される
