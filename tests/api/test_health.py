@@ -33,3 +33,16 @@ class TestHealth:
                 for _name, info in entry["providers"].items():
                     assert "registered" in info
                     assert "loaded" in info
+
+    async def test_health_includes_engine_reachable_for_http_providers(self, client):
+        resp = await client.get("/health")
+        assert resp.status_code == 200
+        body = resp.json()
+        providers = body["providers"]
+        # If aivis_speech is configured, it should have engineReachable
+        if providers.get("tts", {}).get("enabled"):
+            tts_providers = providers["tts"].get("providers", {})
+            if "aivis_speech" in tts_providers:
+                aivis_info = tts_providers["aivis_speech"]
+                assert "engineReachable" in aivis_info
+                assert "baseUrl" in aivis_info

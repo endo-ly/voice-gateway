@@ -20,6 +20,9 @@ def _clear_settings_env(monkeypatch):
         "AIVIS_BASE_URL",
         "AIVIS_MANAGE_ENGINE",
         "AIVIS_ENGINE_DIR",
+        "AIVIS_ENGINE_BIND_HOST",
+        "AIVIS_ENGINE_PORT",
+        "AIVIS_USE_GPU",
         "AIVIS_STARTUP_TIMEOUT_SEC",
         "REAZONSPEECH_REPO_DIR",
         "HOST",
@@ -84,10 +87,42 @@ class TestSettingsFromEnv:
             assert s.aivis_engine_dir.endswith(".vendor/aivis")
             assert s.aivis_startup_timeout_sec == 60
 
+    def test_aivis_engine_bind_settings_from_env(self):
+        with patch.dict(
+            os.environ,
+            {
+                "AIVIS_ENGINE_BIND_HOST": "0.0.0.0",
+                "AIVIS_ENGINE_PORT": "10102",
+            },
+        ):
+            s = Settings()
+            assert s.aivis_engine_bind_host == "0.0.0.0"
+            assert s.aivis_engine_port == 10102
+
+    def test_aivis_bind_settings_default_to_none(self):
+        s = Settings()
+        assert s.aivis_engine_bind_host is None
+        assert s.aivis_engine_port is None
+
+    def test_aivis_use_gpu_from_env(self):
+        with patch.dict(os.environ, {"AIVIS_USE_GPU": "true"}):
+            s = Settings()
+            assert s.aivis_use_gpu is True
+
+    def test_aivis_use_gpu_defaults_to_false(self):
+        s = Settings()
+        assert s.aivis_use_gpu is False
+
     def test_aivis_startup_timeout_must_be_positive(self):
         with patch.dict(os.environ, {"AIVIS_STARTUP_TIMEOUT_SEC": "0"}):
             with pytest.raises(ValidationError, match="aivis_startup_timeout_sec"):
                 Settings()
+
+    def test_reazonspeech_repo_dir_from_env(self):
+        with patch.dict(os.environ, {"REAZONSPEECH_REPO_DIR": ".vendor/reazon"}):
+            s = Settings()
+            assert Path(s.reazonspeech_repo_dir).is_absolute()
+            assert s.reazonspeech_repo_dir.endswith(".vendor/reazon")
 
     def test_irodori_repo_dir_default_is_none(self):
         with patch.dict(os.environ, {}, clear=False):

@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     aivis_base_url: str = Field(default="http://127.0.0.1:10101", validation_alias="AIVIS_BASE_URL")
     aivis_manage_engine: bool = Field(default=False, validation_alias="AIVIS_MANAGE_ENGINE")
     aivis_engine_dir: str = ".vendor/AivisSpeech-Engine"
+    aivis_engine_bind_host: str | None = Field(default=None, validation_alias="AIVIS_ENGINE_BIND_HOST")
+    aivis_engine_port: int | None = Field(default=None, validation_alias="AIVIS_ENGINE_PORT")
+    aivis_use_gpu: bool = Field(default=False, validation_alias="AIVIS_USE_GPU")
     aivis_startup_timeout_sec: int = 180
 
     # ── STT ──

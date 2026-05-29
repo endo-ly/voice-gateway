@@ -162,6 +162,9 @@ curl http://127.0.0.1:8012/v1/voices
 | `AIVIS_BASE_URL` | `http://127.0.0.1:10101` | AivisSpeech EngineのURL |
 | `AIVIS_MANAGE_ENGINE` | `false` | `true` の場合、voice-gateway起動時にAivisSpeech Engineも起動する |
 | `AIVIS_ENGINE_DIR` | `.vendor/AivisSpeech-Engine` | 管理起動するAivisSpeech Engineのディレクトリ |
+| `AIVIS_ENGINE_BIND_HOST` | — | Engine起動時のバインドホスト（未設定時は`AIVIS_BASE_URL`から抽出） |
+| `AIVIS_ENGINE_PORT` | — | Engine起動時のポート（未設定時は`AIVIS_BASE_URL`から抽出） |
+| `AIVIS_USE_GPU` | `false` | `true` の場合、Engine起動時に`--use_gpu`を使用する |
 | `AIVIS_STARTUP_TIMEOUT_SEC` | `180` | AivisSpeech Engine起動待ちタイムアウト（秒） |
 
 ### STT
@@ -203,7 +206,7 @@ curl http://127.0.0.1:8012/v1/voices
 | Provider | 方向 | 呼び出し方式 | 動作環境 |
 |----------|------|------------|---------|
 | [Irodori-TTS](docs/providers/irodori.md) | TTS | CLI subprocess | Windows / Linux + GPU推奨 |
-| [AivisSpeech Engine](docs/providers/aivis-speech.md) | TTS | HTTP API / managed process | Linux / Windows |
+| [AivisSpeech Engine](docs/providers/aivis-speech.md) | TTS | HTTP API / managed process | managed: Linux / external: Linux / Windows |
 | [ReazonSpeech K2](docs/providers/reazonspeech-k2.md) | STT | Python import | Linux |
 
 ## ドキュメント

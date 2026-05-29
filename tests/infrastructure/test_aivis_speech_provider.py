@@ -5,6 +5,7 @@ import pytest
 
 from app.domain.errors import InvalidProviderConfigError
 from app.domain.value_objects.synthesis_request import ProviderSynthesisRequest
+from app.infrastructure.providers.aivis_speech.constants import AIVIS_HEALTH_PATH
 from app.infrastructure.providers.aivis_speech.provider import AivisSpeechProvider
 
 
@@ -68,3 +69,49 @@ async def test_aivis_speech_provider_requires_integer_speaker():
                 provider_config={},
             )
         )
+
+
+@pytest.mark.asyncio
+async def test_aivis_speech_health_returns_reachable_when_engine_responds():
+    async def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == AIVIS_HEALTH_PATH:
+            return httpx.Response(200, json={"version": "1.0.0"})
+        return httpx.Response(404)
+
+    transport = httpx.MockTransport(handler)
+    original_async_client = httpx.AsyncClient
+
+    def client_factory(*args, **kwargs):
+        kwargs["transport"] = transport
+        return original_async_client(*args, **kwargs)
+
+    # We need to patch httpx.AsyncClient inside health()
+    # health() creates its own client, so we patch at module level
+    import unittest.mock
+    with unittest.mock.patch.object(httpx, "AsyncClient", client_factory):
+        provider = AivisSpeechProvider(base_url="http://aivis.local")
+        result = await provider.health()
+
+    assert result["engineReachable"] is True
+    assert result["baseUrl"] == "http://aivis.local"
+
+
+@pytest.mark.asyncio
+async def test_aivis_speech_health_returns_unreachable_on_connection_error():
+    async def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("Connection refused")
+
+    transport = httpx.MockTransport(handler)
+    original_async_client = httpx.AsyncClient
+
+    def client_factory(*args, **kwargs):
+        kwargs["transport"] = transport
+        return original_async_client(*args, **kwargs)
+
+    import unittest.mock
+    with unittest.mock.patch.object(httpx, "AsyncClient", client_factory):
+        provider = AivisSpeechProvider(base_url="http://aivis.local")
+        result = await provider.health()
+
+    assert result["engineReachable"] is False
+    assert result["baseUrl"] == "http://aivis.local"

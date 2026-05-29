@@ -9,6 +9,7 @@ from app.domain.errors import InvalidProviderConfigError, ProviderExecutionError
 from app.domain.value_objects.synthesis_request import ProviderSynthesisRequest
 from app.domain.value_objects.synthesis_result import SynthesisResult
 from app.infrastructure.logging.logger import logger
+from app.infrastructure.providers.aivis_speech.constants import AIVIS_HEALTH_PATH
 
 
 class AivisSpeechProvider:
@@ -96,6 +97,15 @@ class AivisSpeechProvider:
         if not response.content:
             raise ProviderExecutionError(self.provider_name, "synthesis returned empty audio")
         return response.content
+
+    async def health(self) -> dict[str, bool | str]:
+        """Check engine reachability for health endpoints."""
+        try:
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                response = await client.get(f"{self._base_url}{AIVIS_HEALTH_PATH}")
+            return {"engineReachable": response.status_code == 200, "baseUrl": self._base_url}
+        except httpx.HTTPError:
+            return {"engineReachable": False, "baseUrl": self._base_url}
 
     def _raise_for_status(self, response: httpx.Response, operation: str) -> None:
         try:

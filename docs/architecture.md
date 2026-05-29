@@ -165,6 +165,8 @@ TTSとSTTで共通する部分と方向固有の部分を明確に分けてい�
 | `IrodoriProvider` | Irodori CLI subprocess実行（Semaphore=1、tmp管理） |
 | `IrodoriCliBuilder` | engine種別に応じたCLI引数のlist[str]組み立て |
 | `SubprocessRunner` | asyncio.create_subprocess_execのラッパー（timeout、exit code、stderr捕捉） |
+| `AivisSpeechProvider` | AivisSpeech EngineによるTTS（HTTP API、healthチェック付き） |
+| `ManagedHttpEngineProcess` | 外部HTTP Engineのプロセス起動・停止・ヘルスチェック（AivisSpeech等の汎用基盤） |
 | `ReazonSpeechK2Provider` | ReazonSpeech K2によるSTT推論（マルチモデルキャッシュ付き） |
 | `SttCallbackDispatcher` | 転写結果の非同期コールバック送信 |
 | `TempFileManager` | uuid付きtmp wavパスの発行と削除 |

@@ -1,12 +1,14 @@
 """Health check route."""
 
+import asyncio
+
 from fastapi import APIRouter, Request
 
 router = APIRouter()
 
 
-def _provider_status(registry, names):
-    """Build per-provider registered/loaded status dict."""
+async def _provider_status(registry, names):
+    """Build per-provider registered/loaded/engineReachable status dict."""
     status = {}
     for name in names:
         try:
@@ -16,8 +18,17 @@ def _provider_status(registry, names):
         if provider is None:
             status[name] = {"registered": False, "loaded": False}
         else:
-            loaded = getattr(provider, "is_loaded", lambda: True)()
-            status[name] = {"registered": True, "loaded": loaded}
+            info: dict = {"registered": True}
+            loaded = getattr(provider, "is_loaded", None)
+            if callable(loaded):
+                info["loaded"] = loaded()
+            else:
+                info["loaded"] = True
+            health = getattr(provider, "health", None)
+            if asyncio.iscoroutinefunction(health):
+                engine_status = await health()
+                info.update(engine_status)
+            status[name] = info
     return status
 
 
@@ -31,7 +42,7 @@ async def health(request: Request) -> dict:
         names = getattr(request.app.state, "tts_provider_names", [])
         providers["tts"] = {
             "enabled": True,
-            "providers": _provider_status(registry, names),
+            "providers": await _provider_status(registry, names),
         }
     else:
         providers["tts"] = {"enabled": False, "providers": {}}
@@ -41,7 +52,7 @@ async def health(request: Request) -> dict:
         names = getattr(request.app.state, "stt_provider_names", [])
         providers["stt"] = {
             "enabled": True,
-            "providers": _provider_status(registry, names),
+            "providers": await _provider_status(registry, names),
         }
     else:
         providers["stt"] = {"enabled": False, "providers": {}}

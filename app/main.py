@@ -25,19 +25,19 @@ from app.infrastructure.providers.aivis_speech.provider import AivisSpeechProvid
 from app.infrastructure.repositories.yaml_model_profile_repository import YamlModelProfileRepository
 from app.infrastructure.repositories.yaml_voice_profile_repository import YamlVoiceProfileRepository
 from app.infrastructure.repositories.in_memory_transcription_store import InMemoryTranscriptionStore
-from app.infrastructure.runtime.aivis_engine_process import AivisEngineProcess
+from app.infrastructure.runtime.aivis_speech_engine_process import create_aivis_speech_engine_process
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    aivis_engine_process = app.state.aivis_engine_process
-    if aivis_engine_process is not None:
-        await aivis_engine_process.start()
+    managed_processes = app.state.managed_processes
+    for process in managed_processes:
+        await process.start()
     try:
         yield
     finally:
-        if aivis_engine_process is not None:
-            await aivis_engine_process.stop()
+        for process in reversed(managed_processes):
+            await process.stop()
 
 
 app = FastAPI(title="voice-gateway", version="0.1.0", lifespan=lifespan)
@@ -62,7 +62,7 @@ _mode = _settings.mode  # "tts" | "stt" | "all"
 app.state.mode = _mode
 app.state.tts_provider_names = []
 app.state.stt_provider_names = []
-app.state.aivis_engine_process = None
+app.state.managed_processes = []
 
 # ── TTS Providers & Routes ──
 _tts_registry = TTSProviderRegistry()
@@ -94,11 +94,7 @@ if _mode in ("tts", "all"):
 
     if "aivis_speech" in configured_tts_providers:
         if _settings.aivis_manage_engine:
-            app.state.aivis_engine_process = AivisEngineProcess(
-                engine_dir=_settings.aivis_engine_dir,
-                base_url=_settings.aivis_base_url,
-                startup_timeout_sec=_settings.aivis_startup_timeout_sec,
-            )
+            app.state.managed_processes.append(create_aivis_speech_engine_process(_settings))
         _tts_registry.register(
             AivisSpeechProvider(
                 base_url=_settings.aivis_base_url,
