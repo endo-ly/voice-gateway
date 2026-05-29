@@ -168,7 +168,7 @@ curl http://127.0.0.1:8012/v1/voices
 
 | 変数 | デフォルト | 説明 |
 |----------|---------|------|
-| `STT_VENDOR_DIR` | `.vendor` | ReazonSpeechインストールディレクトリ |
+| `REAZONSPEECH_REPO_DIR` | `.vendor/ReazonSpeech` | ReazonSpeech リポジトリのclone先ルートパス（install script用） |
 | `STT_CALLBACK_URL` | — | 転写完了時のコールバックURL |
 | `STT_CALLBACK_TIMEOUT_MS` | `3000` | コールバックタイムアウト（ms） |
 

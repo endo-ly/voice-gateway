@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 AIVIS_DIR="${AIVIS_ENGINE_DIR:-$ROOT_DIR/.vendor/AivisSpeech-Engine}"
 SESSION="${AIVIS_TMUX_SESSION:-aivis-speech-engine}"
-HOST="${AIVIS_HOST:-127.0.0.1}"
-PORT="${AIVIS_PORT:-10101}"
+HOST="${AIVIS_ENGINE_BIND_HOST:-127.0.0.1}"
+PORT="${AIVIS_ENGINE_PORT:-10101}"
 
 if [[ ! -d "$AIVIS_DIR" ]]; then
   echo "AivisSpeech Engine directory not found: $AIVIS_DIR" >&2

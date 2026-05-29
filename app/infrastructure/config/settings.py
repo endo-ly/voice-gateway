@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     aivis_startup_timeout_sec: int = 180
 
     # ── STT ──
-    stt_vendor_dir: str = ".vendor"
+    reazonspeech_repo_dir: str = ".vendor/ReazonSpeech"
     stt_callback_url: str | None = None
     stt_callback_timeout_ms: int = 3000
 
@@ -48,8 +48,8 @@ class Settings(BaseSettings):
         "assets_dir",
         "tmp_dir",
         "irodori_repo_dir",
-        "stt_vendor_dir",
         "aivis_engine_dir",
+        "reazonspeech_repo_dir",
         mode="before",
     )
     @classmethod
@@ -68,8 +68,8 @@ class Settings(BaseSettings):
         self.tmp_dir = _normalize_path(self.tmp_dir, self.project_root)
         if self.irodori_repo_dir:
             self.irodori_repo_dir = _normalize_path(self.irodori_repo_dir, self.project_root)
-        self.stt_vendor_dir = _normalize_path(self.stt_vendor_dir, self.project_root)
         self.aivis_engine_dir = _normalize_path(self.aivis_engine_dir, self.project_root)
+        self.reazonspeech_repo_dir = _normalize_path(self.reazonspeech_repo_dir, self.project_root)
         return self
 
     @field_validator("stt_callback_timeout_ms")

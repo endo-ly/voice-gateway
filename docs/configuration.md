@@ -41,7 +41,7 @@ voice-gatewayの全設定項目と、プロファイルの書き方を説明す�
 
 | 変数 | 必須 | デフォルト | 説明 |
 |------|------|-----------|------|
-| `STT_VENDOR_DIR` | No | `.vendor` | ReazonSpeechインストールディレクトリ |
+| `REAZONSPEECH_REPO_DIR` | No | `.vendor/ReazonSpeech` | ReazonSpeech リポジトリのclone先ルートパス。`scripts/install-reazonspeech-k2.sh` がこのディレクトリをclone/pullし、`pkg/k2-asr` を voice-gateway の `.venv` にinstallする |
 | `STT_CALLBACK_URL` | No | なし | 転写完了時のコールバックURL。`http://` または `https://` のみ対応 |
 | `STT_CALLBACK_TIMEOUT_MS` | No | `3000` | コールバック送信のタイムアウト（ミリ秒）。正の整数のみ |
 

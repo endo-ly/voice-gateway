@@ -787,7 +787,7 @@ TTS/STT双方のProvider状態を含めて `/v1/capabilities` との見え方を
 | `IRODORI_REPO_DIR` | TTS利用時 | なし | Irodori-TTSリポジトリパス |
 | | | | |
 | **STT** | | | |
-| `STT_VENDOR_DIR` | No | `.vendor` | ReazonSpeech等の配置ディレクトリ |
+| `REAZONSPEECH_REPO_DIR` | No | `.vendor/ReazonSpeech` | ReazonSpeech リポジトリのclone先ルートパス |
 | `STT_CALLBACK_URL` | No | なし | STT完了コールバック先URL (例: `http://127.0.0.1:8787/stt/events`) |
 | `STT_CALLBACK_TIMEOUT_MS` | No | `3000` | コールバックタイムアウト |
 
@@ -1107,4 +1107,3 @@ class ModelProfile(BaseModel):
 ```
 
 TTSの動詞は `synthesize`、STTの動詞は `transcribe`。これらを無理に統一した抽象 (`process_voice()`等) は作らない。
-

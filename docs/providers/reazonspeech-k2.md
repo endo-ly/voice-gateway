@@ -42,7 +42,7 @@ models:
 
 | 変数 | デフォルト | 説明 |
 |------|-----------|------|
-| `STT_VENDOR_DIR` | `.vendor` | ReazonSpeechインストールディレクトリ |
+| `REAZONSPEECH_REPO_DIR` | `.vendor/ReazonSpeech` | ReazonSpeech リポジトリのclone先ルートパス（install script用） |
 
 ## 音声要件
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REAZON_DIR="${STT_VENDOR_DIR:-${REAZONSPEECH_REPO_DIR:-$ROOT_DIR/.vendor/ReazonSpeech}}"
+REAZON_DIR="${REAZONSPEECH_REPO_DIR:-$ROOT_DIR/.vendor/ReazonSpeech}"
 
 mkdir -p "$(dirname "$REAZON_DIR")"
 

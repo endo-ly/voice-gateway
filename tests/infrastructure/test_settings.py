@@ -21,6 +21,7 @@ def _clear_settings_env(monkeypatch):
         "AIVIS_MANAGE_ENGINE",
         "AIVIS_ENGINE_DIR",
         "AIVIS_STARTUP_TIMEOUT_SEC",
+        "REAZONSPEECH_REPO_DIR",
         "HOST",
         "PORT",
     ):
@@ -53,6 +54,11 @@ class TestSettingsDefaults:
     def test_default_max_concurrency(self):
         s = Settings()
         assert s.max_concurrency == 1
+
+    def test_default_reazonspeech_repo_dir(self):
+        s = Settings()
+        assert Path(s.reazonspeech_repo_dir).is_absolute()
+        assert s.reazonspeech_repo_dir.endswith(".vendor/ReazonSpeech")
 
 
 class TestSettingsFromEnv:
