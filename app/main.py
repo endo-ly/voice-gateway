@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -20,11 +21,26 @@ from app.infrastructure.config.settings import Settings
 from app.infrastructure.logging.logger import setup_logging
 from app.infrastructure.providers.fake.provider import FakeProvider
 from app.infrastructure.providers.irodori.provider import IrodoriProvider
+from app.infrastructure.providers.aivis_speech.provider import AivisSpeechProvider
 from app.infrastructure.repositories.yaml_model_profile_repository import YamlModelProfileRepository
 from app.infrastructure.repositories.yaml_voice_profile_repository import YamlVoiceProfileRepository
 from app.infrastructure.repositories.in_memory_transcription_store import InMemoryTranscriptionStore
+from app.infrastructure.runtime.aivis_engine_process import AivisEngineProcess
 
-app = FastAPI(title="voice-gateway", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    aivis_engine_process = app.state.aivis_engine_process
+    if aivis_engine_process is not None:
+        await aivis_engine_process.start()
+    try:
+        yield
+    finally:
+        if aivis_engine_process is not None:
+            await aivis_engine_process.stop()
+
+
+app = FastAPI(title="voice-gateway", version="0.1.0", lifespan=lifespan)
 
 # ── Common ──
 app.include_router(health_router)
@@ -46,6 +62,7 @@ _mode = _settings.mode  # "tts" | "stt" | "all"
 app.state.mode = _mode
 app.state.tts_provider_names = []
 app.state.stt_provider_names = []
+app.state.aivis_engine_process = None
 
 # ── TTS Providers & Routes ──
 _tts_registry = TTSProviderRegistry()
@@ -70,6 +87,21 @@ if _mode in ("tts", "all"):
                 irodori_repo_dir=_settings.irodori_repo_dir,
                 tmp_dir=_settings.tmp_dir,
                 base_dir=_settings.project_root,
+                timeout_sec=_settings.timeout_sec,
+                max_concurrency=_settings.max_concurrency,
+            )
+        )
+
+    if "aivis_speech" in configured_tts_providers:
+        if _settings.aivis_manage_engine:
+            app.state.aivis_engine_process = AivisEngineProcess(
+                engine_dir=_settings.aivis_engine_dir,
+                base_url=_settings.aivis_base_url,
+                startup_timeout_sec=_settings.aivis_startup_timeout_sec,
+            )
+        _tts_registry.register(
+            AivisSpeechProvider(
+                base_url=_settings.aivis_base_url,
                 timeout_sec=_settings.timeout_sec,
                 max_concurrency=_settings.max_concurrency,
             )

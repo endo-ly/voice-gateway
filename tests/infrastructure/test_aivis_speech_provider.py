@@ -1,0 +1,70 @@
+import json
+
+import httpx
+import pytest
+
+from app.domain.errors import InvalidProviderConfigError
+from app.domain.value_objects.synthesis_request import ProviderSynthesisRequest
+from app.infrastructure.providers.aivis_speech.provider import AivisSpeechProvider
+
+
+@pytest.mark.asyncio
+async def test_aivis_speech_provider_synthesizes_wav(monkeypatch):
+    requests = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.path == "/audio_query":
+            return httpx.Response(200, json={"speedScale": 1.0})
+        if request.url.path == "/synthesis":
+            return httpx.Response(200, content=b"RIFF....WAVE")
+        return httpx.Response(404)
+
+    transport = httpx.MockTransport(handler)
+    original_async_client = httpx.AsyncClient
+
+    def client_factory(*args, **kwargs):
+        kwargs["transport"] = transport
+        return original_async_client(*args, **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", client_factory)
+
+    provider = AivisSpeechProvider(base_url="http://aivis.local")
+    result = await provider.synthesize(
+        ProviderSynthesisRequest(
+            model_id="aivis-default",
+            voice_id="your-voice-name",
+            text="こんにちは",
+            provider="aivis_speech",
+            engine="voicevox-compatible",
+            provider_config={
+                "speaker": 888753760,
+                "output_sampling_rate": 24000,
+                "output_stereo": False,
+            },
+        )
+    )
+
+    assert result.audio_bytes.startswith(b"RIFF")
+    assert [request.url.path for request in requests] == ["/audio_query", "/synthesis"]
+    assert requests[0].url.params["speaker"] == "888753760"
+    synthesis_payload = json.loads(requests[1].content)
+    assert synthesis_payload["outputSamplingRate"] == 24000
+    assert synthesis_payload["outputStereo"] is False
+
+
+@pytest.mark.asyncio
+async def test_aivis_speech_provider_requires_integer_speaker():
+    provider = AivisSpeechProvider()
+
+    with pytest.raises(InvalidProviderConfigError):
+        await provider.synthesize(
+            ProviderSynthesisRequest(
+                model_id="aivis-default",
+                voice_id="your-voice-name",
+                text="こんにちは",
+                provider="aivis_speech",
+                engine="voicevox-compatible",
+                provider_config={},
+            )
+        )

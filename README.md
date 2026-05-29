@@ -52,6 +52,10 @@ export VOICE_GATEWAY_MODE=all
 
 # Irodori-TTS（TTS利用時）
 export IRODORI_REPO_DIR=/path/to/Irodori-TTS
+
+# AivisSpeech（voice-gatewayからEngineも起動する場合）
+export AIVIS_MANAGE_ENGINE=true
+export AIVIS_ENGINE_DIR=.vendor/AivisSpeech-Engine
 ```
 
 ### 3. 起動
@@ -155,6 +159,10 @@ curl http://127.0.0.1:8012/v1/voices
 | 変数 | デフォルト | 説明 |
 |----------|---------|------|
 | `IRODORI_REPO_DIR` | — | Irodori-TTSインストールパス（Irodori利用時必須） |
+| `AIVIS_BASE_URL` | `http://127.0.0.1:10101` | AivisSpeech EngineのURL |
+| `AIVIS_MANAGE_ENGINE` | `false` | `true` の場合、voice-gateway起動時にAivisSpeech Engineも起動する |
+| `AIVIS_ENGINE_DIR` | `.vendor/AivisSpeech-Engine` | 管理起動するAivisSpeech Engineのディレクトリ |
+| `AIVIS_STARTUP_TIMEOUT_SEC` | `180` | AivisSpeech Engine起動待ちタイムアウト（秒） |
 
 ### STT
 
@@ -195,6 +203,7 @@ curl http://127.0.0.1:8012/v1/voices
 | Provider | 方向 | 呼び出し方式 | 動作環境 |
 |----------|------|------------|---------|
 | [Irodori-TTS](docs/providers/irodori.md) | TTS | CLI subprocess | Windows / Linux + GPU推奨 |
+| [AivisSpeech Engine](docs/providers/aivis-speech.md) | TTS | HTTP API / managed process | Linux / Windows |
 | [ReazonSpeech K2](docs/providers/reazonspeech-k2.md) | STT | Python import | Linux |
 
 ## ドキュメント

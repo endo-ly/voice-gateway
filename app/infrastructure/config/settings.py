@@ -33,13 +33,25 @@ class Settings(BaseSettings):
     timeout_sec: int = 120
     max_concurrency: int = 1
     irodori_repo_dir: str | None = None
+    aivis_base_url: str = Field(default="http://127.0.0.1:10101", validation_alias="AIVIS_BASE_URL")
+    aivis_manage_engine: bool = Field(default=False, validation_alias="AIVIS_MANAGE_ENGINE")
+    aivis_engine_dir: str = ".vendor/AivisSpeech-Engine"
+    aivis_startup_timeout_sec: int = 180
 
     # ── STT ──
     stt_vendor_dir: str = ".vendor"
     stt_callback_url: str | None = None
     stt_callback_timeout_ms: int = 3000
 
-    @field_validator("project_root", "assets_dir", "tmp_dir", "irodori_repo_dir", "stt_vendor_dir", mode="before")
+    @field_validator(
+        "project_root",
+        "assets_dir",
+        "tmp_dir",
+        "irodori_repo_dir",
+        "stt_vendor_dir",
+        "aivis_engine_dir",
+        mode="before",
+    )
     @classmethod
     def reject_escaped_path_control_chars(cls, value: str | None) -> str | None:
         if isinstance(value, str) and any(c in value for c in _CONTROL_CHARS):
@@ -57,6 +69,7 @@ class Settings(BaseSettings):
         if self.irodori_repo_dir:
             self.irodori_repo_dir = _normalize_path(self.irodori_repo_dir, self.project_root)
         self.stt_vendor_dir = _normalize_path(self.stt_vendor_dir, self.project_root)
+        self.aivis_engine_dir = _normalize_path(self.aivis_engine_dir, self.project_root)
         return self
 
     @field_validator("stt_callback_timeout_ms")
@@ -64,6 +77,13 @@ class Settings(BaseSettings):
     def validate_callback_timeout(cls, v):
         if v <= 0:
             raise ValueError("stt_callback_timeout_ms must be a positive integer")
+        return v
+
+    @field_validator("aivis_startup_timeout_sec")
+    @classmethod
+    def validate_aivis_startup_timeout(cls, v):
+        if v <= 0:
+            raise ValueError("aivis_startup_timeout_sec must be a positive integer")
         return v
 
     model_config = {

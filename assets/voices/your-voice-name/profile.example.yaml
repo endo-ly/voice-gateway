@@ -18,3 +18,7 @@ bindings:
 
   tts-fake:
     provider_config: {}
+
+  aivis-default:
+    provider_config:
+      speaker: 888753760

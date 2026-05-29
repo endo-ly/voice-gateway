@@ -130,6 +130,22 @@ models:
     provider_config:
       model_id: reazon-research/reazonspeech-k2-v2
 
+  # AivisSpeech TTS
+  - id: aivis-default
+    direction: tts
+    object: model
+    display_name: AivisSpeech Engine
+    provider: aivis_speech
+    engine: voicevox-compatible
+    defaults:
+      response_format: wav
+      speed: 1.0
+      timeout_sec: 120
+    provider_config:
+      speaker: 888753760
+      output_sampling_rate: 24000
+      output_stereo: false
+
   # テスト用
   - id: tts-fake
     direction: tts
@@ -162,6 +178,24 @@ models:
 | `model_id` | string | HuggingFaceモデルID。キャッシュキーに使用（`model_id:language`） |
 
 > `precision` と `device` は未対応。予約済み。
+
+#### AivisSpeech (engine: voicevox-compatible)
+
+| キー | 型 | 説明 |
+|------|-----|------|
+| `speaker` | integer | AivisSpeech Engineのspeaker/style ID |
+| `speaker_id` | integer | `speaker` の別名。`speaker` が優先される |
+| `output_sampling_rate` | integer | 省略可。AivisSpeechの `outputSamplingRate` に反映 |
+| `output_stereo` | boolean | 省略可。AivisSpeechの `outputStereo` に反映 |
+
+Engineの接続先と管理起動は環境変数で制御する。
+
+| 変数 | デフォルト | 説明 |
+|------|-----------|------|
+| `AIVIS_BASE_URL` | `http://127.0.0.1:10101` | AivisSpeech EngineのURL |
+| `AIVIS_MANAGE_ENGINE` | `false` | `true` の場合、voice-gateway起動時にAivisSpeech Engineも起動する |
+| `AIVIS_ENGINE_DIR` | `.vendor/AivisSpeech-Engine` | 管理起動するAivisSpeech Engineのディレクトリ |
+| `AIVIS_STARTUP_TIMEOUT_SEC` | `180` | AivisSpeech Engine起動待ちタイムアウト（秒） |
 
 #### Fake
 

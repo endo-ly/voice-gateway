@@ -49,6 +49,21 @@ models:
       timeout_sec: 120
     provider_config: {}
 
+  - id: aivis-default
+    direction: tts
+    object: model
+    display_name: AivisSpeech Engine
+    provider: aivis_speech
+    engine: voicevox-compatible
+    defaults:
+      response_format: wav
+      speed: 1.0
+      timeout_sec: 120
+    provider_config:
+      speaker: 888753760
+      output_sampling_rate: 24000
+      output_stereo: false
+
   # STT
   - id: stt-default
     direction: stt

@@ -16,6 +16,11 @@ tmp/*.pt
 tmp/test-assets/
 tmp/test-irodori/
 
+# Local vendor checkouts / downloaded samples
+.vendor/
+sample/*
+!sample/.gitkeep
+
 # Asset binaries (ref latents, audio samples, etc.)
 assets/**/*.pt
 assets/**/*.bin

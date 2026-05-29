@@ -12,7 +12,18 @@ from app.infrastructure.config.settings import Settings
 
 @pytest.fixture(autouse=True)
 def _clear_settings_env(monkeypatch):
-    for key in ("PROJECT_ROOT", "ASSETS_DIR", "TMP_DIR", "IRODORI_REPO_DIR", "HOST", "PORT"):
+    for key in (
+        "PROJECT_ROOT",
+        "ASSETS_DIR",
+        "TMP_DIR",
+        "IRODORI_REPO_DIR",
+        "AIVIS_BASE_URL",
+        "AIVIS_MANAGE_ENGINE",
+        "AIVIS_ENGINE_DIR",
+        "AIVIS_STARTUP_TIMEOUT_SEC",
+        "HOST",
+        "PORT",
+    ):
         monkeypatch.delenv(key, raising=False)
 
 
@@ -49,6 +60,28 @@ class TestSettingsFromEnv:
         with patch.dict(os.environ, {"IRODORI_REPO_DIR": "/opt/irodori"}):
             s = Settings()
             assert s.irodori_repo_dir == "/opt/irodori"
+
+    def test_aivis_settings_from_env(self):
+        with patch.dict(
+            os.environ,
+            {
+                "AIVIS_BASE_URL": "http://127.0.0.1:10102",
+                "AIVIS_MANAGE_ENGINE": "true",
+                "AIVIS_ENGINE_DIR": ".vendor/aivis",
+                "AIVIS_STARTUP_TIMEOUT_SEC": "60",
+            },
+        ):
+            s = Settings()
+            assert s.aivis_base_url == "http://127.0.0.1:10102"
+            assert s.aivis_manage_engine is True
+            assert Path(s.aivis_engine_dir).is_absolute()
+            assert s.aivis_engine_dir.endswith(".vendor/aivis")
+            assert s.aivis_startup_timeout_sec == 60
+
+    def test_aivis_startup_timeout_must_be_positive(self):
+        with patch.dict(os.environ, {"AIVIS_STARTUP_TIMEOUT_SEC": "0"}):
+            with pytest.raises(ValidationError, match="aivis_startup_timeout_sec"):
+                Settings()
 
     def test_irodori_repo_dir_default_is_none(self):
         with patch.dict(os.environ, {}, clear=False):

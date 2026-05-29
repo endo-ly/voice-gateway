@@ -38,7 +38,18 @@ def dispatch_stt_callbacks(
             message=f"callback url scheme not allowed: {parsed.scheme}",
         )
 
-    payload = json.dumps(result.model_dump()).encode("utf-8")
+    payload = json.dumps(
+        {
+            "source": result.source,
+            "text": result.text,
+            "language": result.language,
+            "durationSec": result.duration_sec,
+            "processingMs": result.processing_ms,
+            "provider": result.provider,
+            "model": result.model,
+            "audio": result.audio_info,
+        }
+    ).encode("utf-8")
     request = Request(
         callback_url,
         data=payload,

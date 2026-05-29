@@ -12,5 +12,5 @@ else
   git -C "$REAZON_DIR" pull --ff-only
 fi
 
-uv pip install "$REAZON_DIR/pkg/k2-asr"
-uv pip install sherpa-onnx
+uv pip install --python "$ROOT_DIR/.venv/bin/python" "$REAZON_DIR/pkg/k2-asr"
+uv pip install --python "$ROOT_DIR/.venv/bin/python" sherpa-onnx
