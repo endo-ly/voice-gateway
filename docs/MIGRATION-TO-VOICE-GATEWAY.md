@@ -774,8 +774,6 @@ TTS/STT双方のProvider状態を含めて `/v1/capabilities` との見え方を
 | 変数 | 必須 | デフォルト | 説明 |
 |------|------|-----------|------|
 | `VOICE_GATEWAY_MODE` | No | `all` | 起動mode: `tts`, `stt`, `all`。有効なroutesとProviderを制御する。開発用途では `all` が便利だが、常駐運用では `tts` / `stt` / `all` を明示することを推奨する |
-| `HOST` | No | `127.0.0.1` | 待受ホスト |
-| `PORT` | No | `8012` | 待受ポート |
 | `LOG_LEVEL` | No | `INFO` | ログレベル |
 | `ASSETS_DIR` | No | `assets` | プロファイル配置ディレクトリ |
 | `TMP_DIR` | No | `tmp` | 一時ファイル出力ディレクトリ |

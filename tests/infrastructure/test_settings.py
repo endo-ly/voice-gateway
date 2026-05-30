@@ -25,21 +25,11 @@ def _clear_settings_env(monkeypatch):
         "AIVIS_USE_GPU",
         "AIVIS_STARTUP_TIMEOUT_SEC",
         "REAZONSPEECH_REPO_DIR",
-        "HOST",
-        "PORT",
     ):
         monkeypatch.delenv(key, raising=False)
 
 
 class TestSettingsDefaults:
-    def test_default_host(self):
-        s = Settings()
-        assert s.host == "127.0.0.1"
-
-    def test_default_port(self):
-        s = Settings()
-        assert s.port == 8012
-
     def test_default_assets_dir(self):
         s = Settings()
         assert Path(s.assets_dir).is_absolute()
@@ -131,16 +121,6 @@ class TestSettingsFromEnv:
             with patch.dict(os.environ, env, clear=True):
                 s = Settings()
                 assert s.irodori_repo_dir is None
-
-    def test_custom_port_from_env(self):
-        with patch.dict(os.environ, {"PORT": "9000"}):
-            s = Settings()
-            assert s.port == 9000
-
-    def test_custom_host_from_env(self):
-        with patch.dict(os.environ, {"HOST": "0.0.0.0"}):
-            s = Settings()
-            assert s.host == "0.0.0.0"
 
     def test_irodori_repo_dir_from_dotenv(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)

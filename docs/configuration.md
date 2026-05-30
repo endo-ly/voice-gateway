@@ -21,8 +21,6 @@ voice-gatewayの全設定項目と、プロファイルの書き方を説明す�
 |------|------|-----------|------|
 | `VOICE_GATEWAY_MODE` | No | `all` | サーバーモード。`tts` / `stt` / `all`（[詳細](#サーバーモード)） |
 | `PROJECT_ROOT` | No | voice-gatewayのリポジトリルート | 相対パス解決の基準ディレクトリ |
-| `HOST` | No | `127.0.0.1` | 待受ホスト |
-| `PORT` | No | `8012` | 待受ポート |
 | `LOG_LEVEL` | No | `INFO` | アプリケーションログレベル。生成内容の切り分け時は `DEBUG` にすると、Irodoriへ渡した入力・参照ファイル・stdout/stderrを確認できる |
 | `ASSETS_DIR` | No | `assets` | プロファイル配置ディレクトリ。相対パスは `PROJECT_ROOT` 基準 |
 | `TMP_DIR` | No | `tmp` | 一時ファイル出力ディレクトリ。相対パスは `PROJECT_ROOT` 基準 |

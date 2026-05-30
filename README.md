@@ -70,7 +70,7 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port 8012
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8012
 
 # 別マシンからアクセス（特定のインターフェースにバインド）
-uv run uvicorn app.main:app --host 192.168.0.86 --port 8012
+uv run uvicorn app.main:app --host 192.168.0.210 --port 8012
 ```
 
 ### 4. 動作確認
@@ -148,8 +148,6 @@ curl http://127.0.0.1:8012/v1/voices
 | 変数 | デフォルト | 説明 |
 |----------|---------|------|
 | `VOICE_GATEWAY_MODE` | `all` | サーバーモード: `tts`, `stt`, `all` |
-| `HOST` | `127.0.0.1` | 待受ホスト |
-| `PORT` | `8012` | 待受ポート |
 | `LOG_LEVEL` | `INFO` | ログレベル |
 | `TIMEOUT_SEC` | `120` | Provider実行タイムアウト（秒） |
 | `MAX_CONCURRENCY` | `1` | 同時実行数上限 |

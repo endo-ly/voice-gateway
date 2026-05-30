@@ -26,8 +26,6 @@ class Settings(BaseSettings):
     project_root: str = str(_PROJECT_ROOT)
     log_level: str = "INFO"
     mode: Literal["tts", "stt", "all"] = Field(default="all", validation_alias="VOICE_GATEWAY_MODE")
-    host: str = "127.0.0.1"
-    port: int = 8012
     assets_dir: str = "assets"
     tmp_dir: str = "tmp"
     timeout_sec: int = 120
