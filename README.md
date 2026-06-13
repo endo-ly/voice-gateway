@@ -53,6 +53,11 @@ export VOICE_GATEWAY_MODE=all
 # Irodori-TTS（TTS利用時）
 export IRODORI_REPO_DIR=/path/to/Irodori-TTS
 
+# Irodori-TTS-Serverを内部Engineとして管理起動する場合
+export IRODORI_BACKEND=server
+export IRODORI_MANAGE_SERVER=true
+export IRODORI_SERVER_DIR=/path/to/Irodori-TTS-Server
+
 # AivisSpeech（voice-gatewayからEngineも起動する場合）
 export AIVIS_MANAGE_ENGINE=true
 export AIVIS_ENGINE_DIR=.vendor/AivisSpeech-Engine
@@ -101,6 +106,37 @@ curl -X POST http://127.0.0.1:8012/v1/speech \
   -d '{"model":"tts-default","voice_id":"your-voice-name","speech_text":"こんにちは"}' \
   --output output.wav
 ```
+
+### Stream TTS（チャンク分割・SSE）
+
+会話用途向けのストリーミングTTS。テキストを発話チャンクに分割し、各チャンクの音声を順次SSEで返す。
+
+```bash
+curl -N -X POST http://127.0.0.1:8012/v1/speech/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "tts-default",
+    "voice_id": "your-voice-name",
+    "speech_text": "なるほど。それならまずIrodori-TTS-Serverを内部Engineとして扱うのがよいです。",
+    "segment": {"enabled": true, "mode": "conversation"},
+    "batch": {"max_concurrency": 1}
+  }'
+```
+
+レスポンスは `text/event-stream`。各チャンクが `audio_chunk` イベントとして順次返り、最後に `done` イベントが返る。
+
+```
+event: audio_chunk
+data: {"index":0,"text":"なるほど。","tts_text":"なるほど。","format":"wav","media_type":"audio/wav","audio_base64":"..."}
+
+event: audio_chunk
+data: {"index":1,"text":"それならまず...","tts_text":"それならまず...","format":"wav","media_type":"audio/wav","audio_base64":"..."}
+
+event: done
+data: {"chunks":2}
+```
+
+チャンキングはprovider非依存でGateway側で行う。`segment.mode` に `conversation`（初回チャンク短め）または `narration`（長文向け）を指定できる。
 
 ### STT（音声認識）
 
@@ -157,6 +193,15 @@ curl http://127.0.0.1:8012/v1/voices
 | 変数 | デフォルト | 説明 |
 |----------|---------|------|
 | `IRODORI_REPO_DIR` | — | Irodori-TTSインストールパス（Irodori利用時必須） |
+| `IRODORI_BACKEND` | `server` | Irodori backend: `server`（Irodori-TTS-Server経由）または `cli`（subprocess実行） |
+| `IRODORI_MANAGE_SERVER` | `false` | `true` の場合、voice-gateway起動時にIrodori-TTS-Serverを起動する |
+| `IRODORI_SERVER_BASE_URL` | `http://127.0.0.1:18790` | Irodori-TTS-ServerのURL |
+| `IRODORI_SERVER_DIR` | — | 管理起動するIrodori-TTS-Serverのディレクトリ |
+| `IRODORI_SERVER_HOST` | `127.0.0.1` | Irodori-TTS-Server起動時のバインドホスト |
+| `IRODORI_SERVER_PORT` | `18790` | Irodori-TTS-Server起動時のポート |
+| `IRODORI_SERVER_STARTUP_TIMEOUT_SEC` | `300` | Irodori-TTS-Server起動待ちタイムアウト（秒） |
+| `IRODORI_SERVER_API_KEY` | — | Irodori-TTS-Server側API keyを設定している場合に利用 |
+| `IRODORI_SERVER_MODEL` | `irodori` | Irodori-TTS-Serverに渡すmodel名 |
 | `AIVIS_BASE_URL` | `http://127.0.0.1:10101` | AivisSpeech EngineのURL |
 | `AIVIS_MANAGE_ENGINE` | `false` | `true` の場合、voice-gateway起動時にAivisSpeech Engineも起動する |
 | `AIVIS_ENGINE_DIR` | `.vendor/AivisSpeech-Engine` | 管理起動するAivisSpeech Engineのディレクトリ |
@@ -190,6 +235,7 @@ curl http://127.0.0.1:8012/v1/voices
 | GET | `/v1/voices` | Voice一覧 |
 | POST | `/v1/audio/speech` | OpenAI互換TTS |
 | POST | `/v1/speech` | Native TTS |
+| POST | `/v1/speech/stream` | Stream TTS（SSE、チャンク分割つき） |
 
 ### STT（stt / all）
 
