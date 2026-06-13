@@ -73,14 +73,14 @@ CLI backendとの違い:
 
 ### CLI backend（デバッグ用途）
 
-voice-gatewayは `IRODORI_REPO_DIR` を `cwd` にして `uv run python infer.py` を実行する。
+voice-gatewayは `IRODORI_REPO_DIR` を `cwd` にして `uv run --no-sync python infer.py` を実行する。
 Irodori-TTSリポジトリの `infer.py` が実際の推論を行い、結果をWAVファイルに書き出す。
 
 ```
 voice-gateway (IrodoriProvider → IrodoriCliClient)
   │
   │  cwd = $IRODORI_REPO_DIR
-  │  argv = ["uv", "run", "python", "infer.py", "--hf-checkpoint", ...]
+  │  argv = ["uv", "run", "--no-sync", "python", "infer.py", "--hf-checkpoint", ...]
   │
   ▼
 Irodori-TTS/infer.py
@@ -98,18 +98,36 @@ client (audio/wav)
 
 ### 共通
 
-| 項目 | 値 |
-|------|---|
-| 環境変数 `IRODORI_REPO_DIR` | Irodori-TTSリポジトリのルートパス（`infer.py`が存在するディレクトリ） |
-| チェックポイント | HuggingFaceのrepo ID（初回は自動ダウンロード） |
+| 項目 | デフォルト | 説明 |
+|------|-----------|------|
+| `IRODORI_REPO_DIR` | `.vendor/Irodori-TTS` | Irodori-TTSリポジトリのルートパス（`infer.py`が存在するディレクトリ） |
+| チェックポイント | — | HuggingFaceのrepo ID（初回は自動ダウンロード） |
+
+### セットアップ
+
+```bash
+# server backend（デフォルト）: Irodori-TTS-Serverのみ
+./scripts/install-irodori-tts-server.sh       # Linux/macOS
+./scripts/install-irodori-tts-server.ps1      # Windows
+
+# CLI backend / ref_latentエンコード: Irodori-TTSのみ
+./scripts/install-irodori-tts.sh              # Linux/macOS
+./scripts/install-irodori-tts.ps1             # Windows
+
+# PyTorch backendを指定（デフォルト: cu128）
+IRODORI_TORCH_BACKEND=rocm ./scripts/install-irodori-tts-server.sh
+$env:IRODORI_TORCH_BACKEND="rocm"; ./scripts/install-irodori-tts-server.ps1
+```
+
+`--no-sync` フラグ付きで `uv run` を実行するため、`uv sync --extra <backend>` で事前インストールが必要。
 
 ### server backend追加要件
 
-| 項目 | 値 |
-|------|---|
-| `IRODORI_SERVER_DIR` | Irodori-TTS-Serverリポジトリのルートパス（管理起動時に必須） |
-| `IRODORI_SERVER_BASE_URL` | `http://127.0.0.1:18790`（デフォルト） |
-| Irodori-TTS-Server側 | `uv sync` 済みであること |
+| 項目 | デフォルト | 説明 |
+|------|-----------|------|
+| `IRODORI_SERVER_DIR` | `.vendor/Irodori-TTS-Server` | Irodori-TTS-Serverリポジトリのルートパス |
+| `IRODORI_SERVER_BASE_URL` | `http://127.0.0.1:18790` | Gatewayから接続するURL |
+| Irodori-TTS-Server側 | — | `uv sync` 済みであること |
 
 ### CLI backend追加要件
 
@@ -124,7 +142,7 @@ client (audio/wav)
 参照音声から声をコピーして推論する。`engine: base` の場合に使用。
 
 ```
-uv run python infer.py \
+uv run --no-sync python infer.py \
   --hf-checkpoint <checkpoint> \
   --text <text> \
   --ref-latent <ref_latent_path> \
@@ -160,7 +178,7 @@ uv run python infer.py \
 テキストによる声の特徴の指定だけで推論する。参照音声不要。`engine: voicedesign` の場合に使用。
 
 ```
-uv run python infer.py \
+uv run --no-sync python infer.py \
   --hf-checkpoint <checkpoint> \
   --text <text> \
   --caption <caption> \
@@ -273,7 +291,7 @@ uv run python -m app.cli voices materialize-ref-latents \
 voice-gateway (IrodoriLatentEncoder)
   │
   │  cwd = $IRODORI_REPO_DIR
-  │  argv = ["uv", "run", "python", "scripts/irodori_encode_latent.py", ...]
+  │  argv = ["uv", "run", "--no-sync", "python", "scripts/irodori_encode_latent.py", ...]
   │
   ▼
 scripts/irodori_encode_latent.py
@@ -288,7 +306,7 @@ ref_latent.pt 生成完了
 ブリッジスクリプトのコマンド引数:
 
 ```
-uv run python scripts/irodori_encode_latent.py \
+uv run --no-sync python scripts/irodori_encode_latent.py \
   --input-wav <ref_wav_path> \
   --output-pt <output_pt_path> \
   --checkpoint <checkpoint> \
