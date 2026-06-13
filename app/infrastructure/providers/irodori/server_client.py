@@ -1,5 +1,6 @@
 """Irodori-TTS-Server HTTP client."""
 
+import os
 from typing import Any
 
 import httpx
@@ -27,6 +28,8 @@ _SERVER_ONLY_KEYS: frozenset[str] = frozenset({
     "max_caption_len",
 })
 
+_PATH_KEYS: frozenset[str] = frozenset({"ref_wav_path", "ref_latent_path"})
+
 
 class IrodoriServerClient:
     """HTTP client for Irodori-TTS-Server."""
@@ -34,12 +37,10 @@ class IrodoriServerClient:
     def __init__(
         self,
         base_url: str = "http://127.0.0.1:18790",
-        model: str = "irodori",
         api_key: str = "",
         timeout_sec: int = 120,
     ) -> None:
         self._base_url = base_url.rstrip("/")
-        self._model = model
         self._api_key = api_key
         self._timeout = httpx.Timeout(timeout_sec)
 
@@ -88,6 +89,8 @@ class IrodoriServerClient:
         for cli_key, server_key in _CLI_TO_SERVER_KEY_MAP.items():
             value = cfg.get(cli_key)
             if value is not None:
+                if cli_key in _PATH_KEYS:
+                    value = os.path.abspath(value)
                 irodori[server_key] = value
 
         for key, value in cfg.items():
@@ -100,7 +103,7 @@ class IrodoriServerClient:
             irodori[key] = value
 
         return {
-            "model": self._model,
+            "model": "irodori-tts",
             "input": request.text,
             "voice": cfg.get("voice"),
             "response_format": request.response_format,

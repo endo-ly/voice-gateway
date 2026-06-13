@@ -1,6 +1,7 @@
 """Tests for IrodoriServerClient."""
 
 import json
+import os
 
 import httpx
 import pytest
@@ -47,7 +48,6 @@ async def test_server_client_synthesizes_wav(monkeypatch):
 
     client = IrodoriServerClient(
         base_url="http://127.0.0.1:18790",
-        model="irodori",
     )
     result = await client.synthesize(_make_request())
 
@@ -55,11 +55,11 @@ async def test_server_client_synthesizes_wav(monkeypatch):
     assert result.media_type == "audio/wav"
 
     payload = sent_payloads[0]
-    assert payload["model"] == "irodori"
+    assert payload["model"] == "irodori-tts"
     assert payload["input"] == "こんにちは"
     assert payload["response_format"] == "wav"
     assert payload["irodori"]["chunking_enabled"] is False
-    assert payload["irodori"]["ref_wav"] == "/abs/path/to/ref.wav"
+    assert payload["irodori"]["ref_wav"] == os.path.abspath("/abs/path/to/ref.wav")
     assert payload["irodori"]["num_steps"] == 28
     assert payload["irodori"]["seed"] == 42
 
@@ -94,7 +94,7 @@ async def test_server_client_uses_ref_latent(monkeypatch):
     )
 
     payload = sent_payloads[0]
-    assert payload["irodori"]["ref_latent"] == "/abs/path/to/ref.pt"
+    assert payload["irodori"]["ref_latent"] == os.path.abspath("/abs/path/to/ref.pt")
     assert "ref_wav" not in payload["irodori"]
 
 

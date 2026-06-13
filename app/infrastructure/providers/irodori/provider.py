@@ -30,7 +30,6 @@ class IrodoriProvider:
         backend: Literal["server", "cli"] = "server",
         server_base_url: str = "http://127.0.0.1:18790",
         server_api_key: str = "",
-        server_model: str = "irodori",
     ) -> None:
         self._semaphore = asyncio.Semaphore(max_concurrency)
         self._backend = backend
@@ -38,7 +37,6 @@ class IrodoriProvider:
         if backend == "server":
             self._client: IrodoriServerClient | IrodoriCliClient = IrodoriServerClient(
                 base_url=server_base_url,
-                model=server_model,
                 api_key=server_api_key,
                 timeout_sec=timeout_sec,
             )
