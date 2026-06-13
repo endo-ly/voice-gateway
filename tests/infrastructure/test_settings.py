@@ -17,6 +17,15 @@ def _clear_settings_env(monkeypatch):
         "ASSETS_DIR",
         "TMP_DIR",
         "IRODORI_REPO_DIR",
+        "IRODORI_BACKEND",
+        "IRODORI_MANAGE_SERVER",
+        "IRODORI_SERVER_BASE_URL",
+        "IRODORI_SERVER_DIR",
+        "IRODORI_SERVER_HOST",
+        "IRODORI_SERVER_PORT",
+        "IRODORI_SERVER_STARTUP_TIMEOUT_SEC",
+        "IRODORI_SERVER_API_KEY",
+        "IRODORI_SERVER_MODEL",
         "AIVIS_BASE_URL",
         "AIVIS_MANAGE_ENGINE",
         "AIVIS_ENGINE_DIR",
@@ -121,6 +130,67 @@ class TestSettingsFromEnv:
             with patch.dict(os.environ, env, clear=True):
                 s = Settings()
                 assert s.irodori_repo_dir is None
+
+    def test_irodori_backend_defaults_to_server(self):
+        s = Settings()
+        assert s.irodori_backend == "server"
+
+    def test_irodori_backend_from_env(self):
+        with patch.dict(os.environ, {"IRODORI_BACKEND": "cli"}):
+            s = Settings()
+            assert s.irodori_backend == "cli"
+
+    def test_irodori_manage_server_defaults_to_false(self):
+        s = Settings()
+        assert s.irodori_manage_server is False
+
+    def test_irodori_server_settings_from_env(self):
+        with patch.dict(
+            os.environ,
+            {
+                "IRODORI_SERVER_BASE_URL": "http://127.0.0.1:19000",
+                "IRODORI_SERVER_DIR": ".vendor/Irodori-TTS-Server",
+                "IRODORI_SERVER_HOST": "0.0.0.0",
+                "IRODORI_SERVER_PORT": "19000",
+                "IRODORI_SERVER_STARTUP_TIMEOUT_SEC": "600",
+                "IRODORI_SERVER_API_KEY": "secret",
+                "IRODORI_SERVER_MODEL": "irodori-tts",
+            },
+        ):
+            s = Settings()
+            assert s.irodori_server_base_url == "http://127.0.0.1:19000"
+            assert Path(s.irodori_server_dir).is_absolute()
+            assert Path(s.irodori_server_dir).name == "Irodori-TTS-Server"
+            assert s.irodori_server_host == "0.0.0.0"
+            assert s.irodori_server_port == 19000
+            assert s.irodori_server_startup_timeout_sec == 600
+            assert s.irodori_server_api_key == "secret"
+            assert s.irodori_server_model == "irodori-tts"
+
+    def test_irodori_server_defaults(self):
+        s = Settings()
+        assert s.irodori_server_base_url == "http://127.0.0.1:18790"
+        assert s.irodori_server_host == "127.0.0.1"
+        assert s.irodori_server_port == 18790
+        assert s.irodori_server_startup_timeout_sec == 300
+        assert s.irodori_server_api_key == ""
+        assert s.irodori_server_model == "irodori"
+        assert s.irodori_server_dir is None
+
+    def test_irodori_server_startup_timeout_must_be_positive(self):
+        with patch.dict(os.environ, {"IRODORI_SERVER_STARTUP_TIMEOUT_SEC": "0"}):
+            with pytest.raises(ValidationError, match="irodori_server_startup_timeout_sec"):
+                Settings()
+
+    def test_irodori_server_port_must_be_valid(self):
+        with patch.dict(os.environ, {"IRODORI_SERVER_PORT": "0"}):
+            with pytest.raises(ValidationError, match="irodori_server_port"):
+                Settings()
+
+    def test_irodori_server_port_must_be_in_range(self):
+        with patch.dict(os.environ, {"IRODORI_SERVER_PORT": "70000"}):
+            with pytest.raises(ValidationError, match="irodori_server_port"):
+                Settings()
 
     def test_irodori_repo_dir_from_dotenv(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
