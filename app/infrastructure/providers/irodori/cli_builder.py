@@ -27,7 +27,7 @@ class IrodoriCliBuilder:
             raise ValueError("ref_latent_path or ref_wav_path is required")
 
         cmd = [
-            "uv", "run", "python", "infer.py",
+            "uv", "run", "--no-sync", "python", "infer.py",
             "--hf-checkpoint", checkpoint,
             "--text", text,
             *ref_args,
@@ -62,7 +62,7 @@ class IrodoriCliBuilder:
         max_caption_len: int | None = None,
     ) -> list[str]:
         cmd = [
-            "uv", "run", "python", "infer.py",
+            "uv", "run", "--no-sync", "python", "infer.py",
             "--hf-checkpoint", checkpoint,
             "--text", text,
             "--caption", caption,

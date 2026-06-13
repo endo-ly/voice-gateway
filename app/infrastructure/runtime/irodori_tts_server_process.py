@@ -16,6 +16,7 @@ def create_irodori_tts_server_process(settings: Settings) -> ManagedHttpEnginePr
         command=[
             "uv",
             "run",
+            "--no-sync",
             "python",
             "-m",
             "irodori_openai_tts",

@@ -266,4 +266,4 @@ class TestBuildRefLatentCLI:
             _build_ref_latent(args)
 
         assert exc_info.value.code == 1
-        assert "IRODORI_REPO_DIR is required" in capsys.readouterr().out
+        assert "IRODORI_REPO_DIR is not a directory" in capsys.readouterr().out

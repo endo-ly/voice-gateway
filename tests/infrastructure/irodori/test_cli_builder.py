@@ -76,6 +76,7 @@ class TestIrodoriCliBuilder:
         )
         assert cmd[0] == "uv"
         assert cmd[1] == "run"
+        assert cmd[2] == "--no-sync"
 
     # --- WAV support ---
 

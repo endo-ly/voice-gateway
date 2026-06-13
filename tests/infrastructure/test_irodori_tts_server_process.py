@@ -9,7 +9,7 @@ from app.infrastructure.runtime.irodori_tts_server_process import (
 
 def test_create_irodori_tts_server_process_defaults(monkeypatch, tmp_path):
     monkeypatch.setenv("IRODORI_SERVER_DIR", str(tmp_path))
-    settings = Settings()
+    settings = Settings(_env_file=None)
 
     process = create_irodori_tts_server_process(settings)
 
@@ -19,6 +19,7 @@ def test_create_irodori_tts_server_process_defaults(monkeypatch, tmp_path):
     assert process._command == [
         "uv",
         "run",
+        "--no-sync",
         "python",
         "-m",
         "irodori_openai_tts",
@@ -36,7 +37,7 @@ def test_create_irodori_tts_server_process_custom_settings(monkeypatch, tmp_path
     monkeypatch.setenv("IRODORI_SERVER_HOST", "0.0.0.0")
     monkeypatch.setenv("IRODORI_SERVER_PORT", "19000")
     monkeypatch.setenv("IRODORI_SERVER_STARTUP_TIMEOUT_SEC", "600")
-    settings = Settings()
+    settings = Settings(_env_file=None)
 
     process = create_irodori_tts_server_process(settings)
 
@@ -44,6 +45,7 @@ def test_create_irodori_tts_server_process_custom_settings(monkeypatch, tmp_path
     assert process._command == [
         "uv",
         "run",
+        "--no-sync",
         "python",
         "-m",
         "irodori_openai_tts",
