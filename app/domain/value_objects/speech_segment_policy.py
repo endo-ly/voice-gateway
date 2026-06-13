@@ -29,8 +29,8 @@ class SpeechSegmentPolicy(BaseModel):
     normal_max_chars: int | None = None
     hard_max_chars: int | None = None
 
-    split_punctuations: list[str] = ["。", "！", "？", "!", "?", "\n"]
-    soft_split_punctuations: list[str] = ["、", "；", "："]
+    split_punctuations: list[str] = ["。", "！", "？", ".", "!", "?", "\n"]
+    soft_split_punctuations: list[str] = ["、", "，", "；", "：", ",", ";", ":"]
 
     merge_too_short_chunks: bool = True
 
