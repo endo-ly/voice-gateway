@@ -8,7 +8,7 @@ from app.infrastructure.runtime.aivis_speech_engine_process import create_aivis_
 def test_create_aivis_speech_engine_process_uses_base_url_defaults(monkeypatch, tmp_path):
     monkeypatch.setenv("AIVIS_BASE_URL", "http://127.0.0.1:10102")
     monkeypatch.setenv("AIVIS_ENGINE_DIR", str(tmp_path))
-    settings = Settings()
+    settings = Settings(_env_file=None)
 
     process = create_aivis_speech_engine_process(settings)
 
@@ -34,7 +34,7 @@ def test_create_aivis_speech_engine_process_allows_bind_override_and_gpu(monkeyp
     monkeypatch.setenv("AIVIS_ENGINE_BIND_HOST", "0.0.0.0")
     monkeypatch.setenv("AIVIS_ENGINE_PORT", "10103")
     monkeypatch.setenv("AIVIS_USE_GPU", "true")
-    settings = Settings()
+    settings = Settings(_env_file=None)
 
     process = create_aivis_speech_engine_process(settings)
 
