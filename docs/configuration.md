@@ -31,9 +31,19 @@ voice-gatewayの全設定項目と、プロファイルの書き方を説明す�
 
 | 変数 | 必須 | デフォルト | 説明 |
 |------|------|-----------|------|
-| `IRODORI_REPO_DIR` | ※ | なし | [Irodori-TTS](https://github.com/Aratako/Irodori-TTS) リポジトリのclone先ルートパス（`infer.py` があるディレクトリ）。Irodori Providerはこのディレクトリをcwdとして `uv run python infer.py` を実行する |
+| `IRODORI_BACKEND` | No | `server` | `server`（Irodori-TTS-Server経由）または `cli`（subprocess実行） |
+| `IRODORI_REPO_DIR` | ※cli | `.vendor/Irodori-TTS` | [Irodori-TTS](https://github.com/Aratako/Irodori-TTS) リポジトリパス。`cli` backendで使用。`uv run --no-sync python infer.py` を実行 |
+| `IRODORI_SERVER_DIR` | ※server | `.vendor/Irodori-TTS-Server` | [Irodori-TTS-Server](https://github.com/Aratako/Irodori-TTS-Server) リポジトリパス。`server` backendの管理起動で使用 |
+| `IRODORI_MANAGE_SERVER` | No | `false` | `true` の場合、voice-gateway起動時にIrodori-TTS-Serverをsubprocess起動する |
+| `IRODORI_SERVER_BASE_URL` | No | `http://127.0.0.1:18790` | Irodori-TTS-ServerのURL（管理起動・外部起動どちらでも共通） |
+| `IRODORI_SERVER_HOST` | No | `127.0.0.1` | 管理起動時のIrodori-TTS-Server listen host |
+| `IRODORI_SERVER_PORT` | No | `18790` | 管理起動時のIrodori-TTS-Server listen port |
+| `IRODORI_SERVER_STARTUP_TIMEOUT_SEC` | No | `300` | Irodori-TTS-Server起動待ちタイムアウト（秒） |
+| `IRODORI_SERVER_API_KEY` | No | なし | Irodori-TTS-ServerのAPIキー（サーバー側で設定している場合） |
 
-> ※ `models.yaml` に `provider: irodori` のmodelが定義されていて、かつ `VOICE_GATEWAY_MODE` が `tts` または `all` の場合に必須。
+> ※ `IRODORI_REPO_DIR` は `IRODORI_BACKEND=cli` の場合のみ必須。`IRODORI_SERVER_DIR` は `IRODORI_MANAGE_SERVER=true` の場合のみ必須。`server` backend（デフォルト）で外部起動のIrodori-TTS-Serverを使う場合はどちらも不要。
+
+> **Note**: `engine: voicedesign` は `IRODORI_BACKEND=cli` でのみ使用可能。`server` backend では `InvalidProviderConfigError` になる。
 
 ### STT（ReazonSpeech）
 
@@ -53,9 +63,9 @@ voice-gatewayの全設定項目と、プロファイルの書き方を説明す�
 
 | モード | 登録されるルート | 必要な環境変数 |
 |--------|----------------|--------------|
-| `tts` | TTS系 + 共通 | `IRODORI_REPO_DIR` (Irodori利用時) |
+| `tts` | TTS系 + 共通 | `IRODORI_REPO_DIR` (cli backend時) / `IRODORI_SERVER_DIR` (server管理起動時) |
 | `stt` | STT系 + 共通 | — |
-| `all` | 全ルート | `IRODORI_REPO_DIR` (Irodori利用時) |
+| `all` | 全ルート | `IRODORI_REPO_DIR` (cli backend時) / `IRODORI_SERVER_DIR` (server管理起動時) |
 
 共通ルート（`/health`, `/v1/models`, `/v1/capabilities`）は全モードで利用可能。
 
@@ -280,6 +290,8 @@ bindings:
 `ref_latent_path` と `ref_wav_path` はどちらか一方が必須。両方ある場合は `ref_latent_path` が優先される。
 
 #### engine: voicedesign
+
+> **制限**: `IRODORI_BACKEND=cli` でのみ使用可能。`server` backendでは拒否される。
 
 | キー | 型 | 説明 |
 |------|-----|------|

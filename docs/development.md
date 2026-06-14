@@ -56,13 +56,13 @@ voice-gateway/
         models.py            #     GET /v1/models
         capabilities.py      #     GET /v1/capabilities
         voices.py            #     GET /v1/voices (tts/all)
-        openai_speech.py     #     POST /v1/audio/speech (tts/all)
+        openai_speech.py     #     POST /v1/audio/speech (tts/all) — stream_format=sse でSSE
         native_speech.py     #     POST /v1/speech (tts/all)
         openai_transcriptions.py  # POST /v1/audio/transcriptions (stt/all)
         transcriptions.py    #     POST /v1/transcribe (stt/all)
-        transcriptions_latest.py  # GET /v1/transcribe/latest (stt/all)
+        transcriptions_latest.py  # GET /v1/transcriptions/latest (stt/all)
       schemas/               #   リクエスト/レスポンス定義
-        openai_speech.py     #     OpenAISpeechRequest
+        openai_speech.py     #     OpenAISpeechRequest (+ SegmentOptions, BatchOptions)
         native_speech.py     #     NativeSpeechRequest
         transcription.py     #     TranscriptionRequest / TranscriptionResultSchema
         capabilities.py      #     CapabilitiesResponse
@@ -72,6 +72,7 @@ voice-gateway/
     application/             # Application層: ユースケース・サービス
       use_cases/
         synthesize_speech.py #     TTS 音声合成ユースケース
+        stream_speech.py     #     SSE ストリーミングTTS ユースケース
         transcribe_audio.py  #     STT 音声認識ユースケース
         get_latest_transcription.py  # 直近転写結果取得
         list_models.py       #     model一覧取得
@@ -82,6 +83,8 @@ voice-gateway/
         error_mapper.py      #     domain error → HTTP（共通）
         tts_profile_resolver.py   # TTS model + voice 解決
         tts_provider_registry.py  # TTS Provider lookup
+        speech_segmenter.py       # テキスト分割（provider非依存）
+        speech_batch_synthesizer.py  # チャンク逐次/並列合成
         stt_profile_resolver.py   # STT model 解決
         stt_provider_registry.py  # STT Provider lookup
 
@@ -105,23 +108,31 @@ voice-gateway/
 
     infrastructure/          # Infrastructure層: 実装
       config/
-        settings.py          #     pydantic-settings (VOICE_GATEWAY_MODE)
+        settings.py          #     pydantic-settings (VOICE_GATEWAY_MODE, Irodori, Aivis 等)
       repositories/
         yaml_model_profile_repository.py  # YAML読み込み (ModelProfile)
         yaml_voice_profile_repository.py  # YAML読み込み (VoiceProfile)
         in_memory_transcription_store.py  # 転写結果インメモリ保持
       providers/
         fake/provider.py     #     テスト用ダミーTTS Provider
-        irodori/             #     Irodori CLI subprocess (TTS)
-          provider.py        #       Provider本体（Semaphore付き）
+        irodori/             #     Irodori TTS (server / CLI backend切替)
+          provider.py        #       Provider本体（backend切替・Semaphore付き）
+          server_client.py   #       Irodori-TTS-Server HTTP client (server backend)
+          cli_client.py      #       CLI subprocess client (cli backend)
           cli_builder.py     #       CLI引数組み立て
           subprocess_runner.py
           config_schemas.py
           latent_encoder.py  #       WAV→PT変換
+        aivis_speech/        #     AivisSpeech (HTTP Engine)
+          provider.py        #       Provider本体
         reazonspeech_k2/     #     ReazonSpeech K2 (STT)
           provider.py        #       Provider本体（マルチモデルキャッシュ付き）
           audio_validator.py #       音声バリデーション
           types.py           #       内部型定義
+      runtime/
+        managed_http_engine_process.py  # 外部HTTP Engineのsubprocess管理（クロスプラットフォーム）
+        irodori_tts_server_process.py   # Irodori-TTS-Server管理起動factory
+        aivis_speech_engine_process.py  # AivisSpeech Engine管理起動factory
       events/
         stt_callback_dispatcher.py  # 転写結果コールバック送信
       tempfiles/
@@ -133,6 +144,10 @@ voice-gateway/
 
   scripts/
     irodori_encode_latent.py #     Irodori環境内で動くエンコード用ブリッジスクリプト
+    install-irodori-tts.sh        # Irodori-TTS install (Linux/macOS)
+    install-irodori-tts.ps1       # Irodori-TTS install (Windows)
+    install-irodori-tts-server.sh # Irodori-TTS-Server install (Linux/macOS)
+    install-irodori-tts-server.ps1 # Irodori-TTS-Server install (Windows)
     install-reazonspeech-k2.sh
 
   assets/                    # 設定ファイル（.gitignoreで管理）
@@ -193,7 +208,7 @@ uv run pytest tests/ -v --tb=long
 | Application | — | 設定マージ、Provider lookup、profile解決、errorマッピング、ユースケース |
 | API | — | schema validation、エンドポイントのstatus code・content-type・モード分岐 |
 | Integration | — | 受け入れ条件のEnd-to-End検証 |
-| **Total** | **263** | |
+| **Total** | **330+** | |
 
 ### conftest.py
 

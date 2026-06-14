@@ -170,7 +170,7 @@ curl -X POST http://127.0.0.1:8012/v1/transcribe \
 **直近の転写結果:**
 
 ```bash
-curl http://127.0.0.1:8012/v1/transcribe/latest
+curl http://127.0.0.1:8012/v1/transcriptions/latest
 ```
 
 ### サーバー情報
@@ -241,9 +241,8 @@ curl http://127.0.0.1:8012/v1/voices
 | メソッド | パス | 説明 |
 |--------|----------|------|
 | GET | `/v1/voices` | Voice一覧 |
-| POST | `/v1/audio/speech` | OpenAI互換TTS |
+| POST | `/v1/audio/speech` | OpenAI互換TTS（`stream_format: "sse"` でSSEストリーミング） |
 | POST | `/v1/speech` | Native TTS |
-| POST | `/v1/speech/stream` | Stream TTS（SSE、チャンク分割つき） |
 
 ### STT（stt / all）
 
@@ -251,7 +250,7 @@ curl http://127.0.0.1:8012/v1/voices
 |--------|----------|------|
 | POST | `/v1/audio/transcriptions` | OpenAI互換STT |
 | POST | `/v1/transcribe` | Native STT |
-| GET | `/v1/transcribe/latest` | 直近の転写結果 |
+| GET | `/v1/transcriptions/latest` | 直近の転写結果 |
 
 ## Provider対応
 

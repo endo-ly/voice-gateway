@@ -175,6 +175,8 @@ uv run --no-sync python infer.py \
 
 ### voicedesign engine（キャプション条件付き音声設計）
 
+> **制限**: `IRODORI_BACKEND=cli` でのみ使用可能。`server` backendでは `InvalidProviderConfigError` になる。
+
 テキストによる声の特徴の指定だけで推論する。参照音声不要。`engine: voicedesign` の場合に使用。
 
 ```

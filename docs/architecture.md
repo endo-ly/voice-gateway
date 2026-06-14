@@ -150,6 +150,7 @@ TTSとSTTで共通する部分と方向固有の部分を明確に分けてい�
 | クラス | 役割 |
 |--------|------|
 | `SynthesizeSpeech` | TTS ユースケース（validation → resolve → dispatch） |
+| `StreamSpeech` | SSE ストリーミングTTS ユースケース（segment → batch synthesize → SSE配信） |
 | `TranscribeAudio` | STT ユースケース（resolve → transcribe → store → callback） |
 | `GetLatestTranscription` | 直近の転写結果取得ユースケース |
 | `ListModels` | model一覧取得 |
@@ -162,11 +163,15 @@ TTSとSTTで共通する部分と方向固有の部分を明確に分けてい�
 | `YamlModelProfileRepository` | models.yamlの読み込み（safe_load + Pydantic validation、キャッシュ付き） |
 | `YamlVoiceProfileRepository` | voices/*/profile.yamlの読み込み |
 | `InMemoryTranscriptionStore` | 転写結果のインメモリ保持・最新1件の取得 |
-| `IrodoriProvider` | Irodori CLI subprocess実行（Semaphore=1、tmp管理） |
+| `IrodoriProvider` | Irodori TTS Provider（server/cli backend切替、Semaphore、voicedesign+server拒否） |
+| `IrodoriServerClient` | Irodori-TTS-Server HTTP client（server backend） |
+| `IrodoriCliClient` | Irodori CLI subprocess client（cli backend） |
 | `IrodoriCliBuilder` | engine種別に応じたCLI引数のlist[str]組み立て |
 | `SubprocessRunner` | asyncio.create_subprocess_execのラッパー（timeout、exit code、stderr捕捉） |
+| `SpeechSegmenter` | テキスト分割（provider非依存、会話/ナレーションモード） |
+| `SpeechBatchSynthesizer` | チャンク逐次/並列合成（stop_on_error、max_concurrency） |
 | `AivisSpeechProvider` | AivisSpeech EngineによるTTS（HTTP API、healthチェック付き） |
-| `ManagedHttpEngineProcess` | 外部HTTP Engineのプロセス起動・停止・ヘルスチェック（AivisSpeech等の汎用基盤） |
+| `ManagedHttpEngineProcess` | 外部HTTP Engineのプロセス起動・停止・ヘルスチェック（Irodori-TTS-Server、AivisSpeech等の汎用基盤、クロスプラットフォーム） |
 | `ReazonSpeechK2Provider` | ReazonSpeech K2によるSTT推論（マルチモデルキャッシュ付き） |
 | `SttCallbackDispatcher` | 転写結果の非同期コールバック送信 |
 | `TempFileManager` | uuid付きtmp wavパスの発行と削除 |

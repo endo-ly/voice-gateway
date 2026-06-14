@@ -1,5 +1,7 @@
 # voice-gateway 統合計画
 
+> **履歴文書**: これは `stt-adapter` / `tts-adapter` から `voice-gateway` への統合当時の計画文書です。現在の実装状況を反映していない場合があります。最新の仕様は [APIリファレンス](api-reference.md) および各Provider文書を参照してください。
+
 `stt-adapter` と `tts-adapter` を統合し、`voice-gateway` として再構成する計画。
 
 ## 目次

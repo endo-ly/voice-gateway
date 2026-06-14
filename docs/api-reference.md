@@ -38,7 +38,7 @@ voice-gatewayが提供する全エンドポイントの仕様。
 |---------|------|------|
 | `POST` | `/v1/audio/transcriptions` | OpenAI互換STT |
 | `POST` | `/v1/transcribe` | Native STT |
-| `GET` | `/v1/transcribe/latest` | 直近の転写結果取得 |
+| `GET` | `/v1/transcriptions/latest` | 直近の転写結果取得 |
 
 ---
 
@@ -416,7 +416,7 @@ source: stackchan
 
 ---
 
-### GET /v1/transcribe/latest
+### GET /v1/transcriptions/latest
 
 直近の転写結果を取得する。
 
