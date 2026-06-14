@@ -147,6 +147,11 @@ data: {"chunks":2}
 
 チャンキングはprovider非依存でGateway側で行う。`segment.mode` に `conversation`（初回チャンク短め）または `narration`（長文向け）を指定できる。
 
+> **Tip**: SSEレスポンスを1つのWAVに結合するスクリプト `scripts/decode_sse.py` がある。model/voiceは省略可能（Gatewayから自動検出）。
+> ```bash
+> uv run python scripts/decode_sse.py --text "長い文章もチャンク分割して処理されます。" -o output.wav
+> ```
+
 ### STT（音声認識）
 
 **OpenAI互換:**
