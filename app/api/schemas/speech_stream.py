@@ -20,7 +20,7 @@ class SpeechStreamRequest(BaseModel):
     model: str
     voice_id: str
     speech_text: str = Field(min_length=1)
-    response_format: str = "wav"
+    response_format: Literal["wav"] = "wav"
     segment: SegmentOptions = Field(default_factory=SegmentOptions)
     batch: BatchOptions = Field(default_factory=BatchOptions)
     extra_options: dict[str, Any] = Field(default_factory=dict)

@@ -83,8 +83,9 @@ if _mode in ("tts", "all"):
         _tts_registry.register(FakeProvider())
 
     if "irodori" in configured_tts_providers:
-        if not Path(_settings.irodori_repo_dir).is_dir():
-            raise RuntimeError(f"IRODORI_REPO_DIR is not a directory: {_settings.irodori_repo_dir}")
+        if _settings.irodori_backend == "cli":
+            if not Path(_settings.irodori_repo_dir).is_dir():
+                raise RuntimeError(f"IRODORI_REPO_DIR is not a directory: {_settings.irodori_repo_dir}")
 
         if _settings.irodori_backend == "server" and _settings.irodori_manage_server:
             app.state.managed_processes.append(create_irodori_tts_server_process(_settings))

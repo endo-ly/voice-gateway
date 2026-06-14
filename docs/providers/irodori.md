@@ -38,7 +38,7 @@ client (audio/wav)
 
 ```json
 {
-  "model": "irodori",
+  "model": "irodori-tts",
   "voice": null,
   "input": "こんにちは。",
   "response_format": "wav",
@@ -55,7 +55,7 @@ client (audio/wav)
 
 | フィールド | 出処 | 説明 |
 |------------|------|------|
-| `model` | `IRODORI_SERVER_MODEL` | Irodori-TTS-Serverに渡すmodel名 |
+| `model` | 固定値 `"irodori-tts"` | Irodori-TTS-Serverに渡すmodel名 |
 | `voice` | provider_config (`voice`) | voice名。通常は `null`（ref_wav/ref_latentで指定） |
 | `input` | リクエスト | 読み上げるテキスト |
 | `response_format` | リクエスト | `wav` |
