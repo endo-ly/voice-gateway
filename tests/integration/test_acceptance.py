@@ -176,11 +176,12 @@ def _parse_sse(text: str) -> list[dict]:
 class TestAcceptanceSpeechStream:
     async def test_stream_returns_multiple_chunks_in_order(self, client):
         resp = await client.post(
-            "/v1/speech/stream",
+            "/v1/audio/speech",
             json={
                 "model": "tts-default",
-                "voice_id": "your-voice-name",
-                "speech_text": "一つ目の文です。二つ目の文です。三つ目の文です。",
+                "voice": "your-voice-name",
+                "input": "一つ目の文です。二つ目の文です。三つ目の文です。",
+                "stream_format": "sse",
                 "segment": {"enabled": True, "mode": "conversation"},
             },
         )
@@ -206,11 +207,12 @@ class TestAcceptanceSpeechStream:
 
     async def test_stream_disabled_segment_single_chunk(self, client):
         resp = await client.post(
-            "/v1/speech/stream",
+            "/v1/audio/speech",
             json={
                 "model": "tts-default",
-                "voice_id": "your-voice-name",
-                "speech_text": "分割なしのテキストです。",
+                "voice": "your-voice-name",
+                "input": "分割なしのテキストです。",
+                "stream_format": "sse",
                 "segment": {"enabled": False},
             },
         )
@@ -222,11 +224,12 @@ class TestAcceptanceSpeechStream:
 
     async def test_stream_unknown_model_returns_error_event(self, client):
         resp = await client.post(
-            "/v1/speech/stream",
+            "/v1/audio/speech",
             json={
                 "model": "nonexistent",
-                "voice_id": "your-voice-name",
-                "speech_text": "テスト",
+                "voice": "your-voice-name",
+                "input": "テスト",
+                "stream_format": "sse",
             },
         )
         assert resp.status_code == 200
@@ -240,11 +243,12 @@ class TestAcceptanceSpeechStream:
 
     async def test_stream_unknown_voice_returns_error_event(self, client):
         resp = await client.post(
-            "/v1/speech/stream",
+            "/v1/audio/speech",
             json={
                 "model": "tts-default",
-                "voice_id": "nonexistent-voice",
-                "speech_text": "テスト",
+                "voice": "nonexistent-voice",
+                "input": "テスト",
+                "stream_format": "sse",
             },
         )
         assert resp.status_code == 200
@@ -259,11 +263,12 @@ class TestAcceptanceSpeechStream:
             "内部Engineとして扱うのがよいです。"
         )
         resp = await client.post(
-            "/v1/speech/stream",
+            "/v1/audio/speech",
             json={
                 "model": "tts-default",
-                "voice_id": "your-voice-name",
-                "speech_text": long_text,
+                "voice": "your-voice-name",
+                "input": long_text,
+                "stream_format": "sse",
                 "segment": {"enabled": True, "mode": "conversation"},
             },
         )

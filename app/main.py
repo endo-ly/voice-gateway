@@ -74,7 +74,6 @@ if _mode in ("tts", "all"):
     from app.api.routes.voices import router as voices_router
     from app.api.routes.openai_speech import router as openai_speech_router
     from app.api.routes.native_speech import router as native_speech_router
-    from app.api.routes.speech_stream import router as speech_stream_router
 
     tts_models = [m for m in _model_repo.list_all() if m.direction == "tts"]
     configured_tts_providers = {m.provider for m in tts_models}
@@ -121,7 +120,6 @@ if _mode in ("tts", "all"):
     app.include_router(voices_router)
     app.include_router(openai_speech_router)
     app.include_router(native_speech_router)
-    app.include_router(speech_stream_router)
 
     _segmenter = SpeechSegmenter()
     _batch_synthesizer = SpeechBatchSynthesizer(

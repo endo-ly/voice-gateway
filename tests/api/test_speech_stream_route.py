@@ -1,4 +1,4 @@
-"""Tests for speech stream route."""
+"""Tests for SSE streaming via /v1/audio/speech with stream_format=sse."""
 
 import base64
 import json
@@ -14,13 +14,14 @@ def client():
     return TestClient(app)
 
 
-def test_speech_stream_returns_sse(client):
+def test_speech_sse_returns_stream(client):
     response = client.post(
-        "/v1/speech/stream",
+        "/v1/audio/speech",
         json={
             "model": "tts-default",
-            "voice_id": "your-voice-name",
-            "speech_text": "なるほど。それでは始めましょう。",
+            "voice": "your-voice-name",
+            "input": "なるほど。それでは始めましょう。",
+            "stream_format": "sse",
             "segment": {"enabled": True, "mode": "conversation"},
             "batch": {"max_concurrency": 1},
         },
@@ -49,13 +50,14 @@ def test_speech_stream_returns_sse(client):
     assert done_data["chunks"] == len(audio_chunks)
 
 
-def test_speech_stream_disabled_segment(client):
+def test_speech_sse_disabled_segment(client):
     response = client.post(
-        "/v1/speech/stream",
+        "/v1/audio/speech",
         json={
             "model": "tts-default",
-            "voice_id": "your-voice-name",
-            "speech_text": "これはテストです。",
+            "voice": "your-voice-name",
+            "input": "これはテストです。",
+            "stream_format": "sse",
             "segment": {"enabled": False},
         },
     )
@@ -69,6 +71,36 @@ def test_speech_stream_disabled_segment(client):
 
     data = json.loads(audio_chunks[0]["data"])
     assert data["text"] == "これはテストです。"
+
+
+def test_speech_rejects_invalid_stream_format(client):
+    response = client.post(
+        "/v1/audio/speech",
+        json={
+            "model": "tts-default",
+            "voice": "your-voice-name",
+            "input": "テスト",
+            "stream_format": "websocket",
+        },
+    )
+
+    assert response.status_code == 400
+    body = json.loads(response.content)
+    assert "stream_format" in body["error"]["message"]
+
+
+def test_speech_without_stream_format_returns_binary(client):
+    response = client.post(
+        "/v1/audio/speech",
+        json={
+            "model": "tts-default",
+            "voice": "your-voice-name",
+            "input": "これはテストです。",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("content-type", "").startswith("audio/")
 
 
 def _parse_sse(lines: list[str]) -> list[dict]:

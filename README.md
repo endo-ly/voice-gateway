@@ -117,15 +117,16 @@ curl -X POST http://127.0.0.1:8012/v1/speech \
 
 ### Stream TTS（チャンク分割・SSE）
 
-会話用途向けのストリーミングTTS。テキストを発話チャンクに分割し、各チャンクの音声を順次SSEで返す。
+`stream_format: "sse"` を指定すると、テキストを発話チャンクに分割し、各チャンクの音声を順次SSEで返す。
 
 ```bash
-curl -N -X POST http://127.0.0.1:8012/v1/speech/stream \
+curl -N -X POST http://127.0.0.1:8012/v1/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
     "model": "tts-default",
-    "voice_id": "your-voice-name",
-    "speech_text": "なるほど。それならまずIrodori-TTS-Serverを内部Engineとして扱うのがよいです。",
+    "voice": "your-voice-name",
+    "input": "なるほど。それならまずIrodori-TTS-Serverを内部Engineとして扱うのがよいです。",
+    "stream_format": "sse",
     "segment": {"enabled": true, "mode": "conversation"},
     "batch": {"max_concurrency": 1}
   }'
