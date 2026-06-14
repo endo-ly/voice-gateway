@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class IrodoriBaseConfig(BaseModel):
-    """Merged config for Irodori base engine (zero-shot voice cloning)."""
+    """Merged config for Irodori base engine (zero-shot voice cloning) — CLI backend."""
 
     checkpoint: str
     ref_latent_path: str | None = None
@@ -25,6 +25,28 @@ class IrodoriBaseConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_ref_source(self) -> "IrodoriBaseConfig":
+        if not self.ref_latent_path and not self.ref_wav_path:
+            raise ValueError(
+                "ref_latent_path or ref_wav_path is required for base engine"
+            )
+        return self
+
+
+class IrodoriServerBaseConfig(BaseModel):
+    """Merged config for Irodori base engine — server backend.
+
+    The server manages checkpoint, devices, and precision internally,
+    so those are not required here.
+    """
+
+    ref_latent_path: str | None = None
+    ref_wav_path: str | None = None
+    num_steps: int = 28
+    seed: int = 0
+    speaker_kv_scale: float = 1.0
+
+    @model_validator(mode="after")
+    def validate_ref_source(self) -> "IrodoriServerBaseConfig":
         if not self.ref_latent_path and not self.ref_wav_path:
             raise ValueError(
                 "ref_latent_path or ref_wav_path is required for base engine"

@@ -4,11 +4,14 @@ import asyncio
 import os
 import signal
 import subprocess
+import sys
 from pathlib import Path
 
 import httpx
 
 from app.infrastructure.logging.logger import logger
+
+_IS_WINDOWS = sys.platform == "win32"
 
 
 class ManagedHttpEngineProcess:
@@ -53,12 +56,18 @@ class ManagedHttpEngineProcess:
         logger.info("Starting managed %s at %s", self._name, self._base_url)
         env = os.environ.copy()
         env.pop("VIRTUAL_ENV", None)
+
+        popen_kwargs: dict[str, object] = {"text": True}
+        if _IS_WINDOWS:
+            popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            popen_kwargs["start_new_session"] = True
+
         self._process = subprocess.Popen(
             self._command,
             cwd=self._cwd,
             env=env,
-            text=True,
-            start_new_session=True,
+            **popen_kwargs,
         )
         await self._wait_until_ready()
 
@@ -70,14 +79,47 @@ class ManagedHttpEngineProcess:
             return
 
         logger.info("Stopping managed %s", self._name)
-        os.killpg(self._process.pid, signal.SIGTERM)
+        pid = self._process.pid
+
+        self._send_terminate()
         try:
-            await asyncio.wait_for(asyncio.to_thread(self._process.wait), timeout=15)
+            await asyncio.wait_for(
+                asyncio.to_thread(self._process.wait), timeout=15
+            )
         except TimeoutError:
-            os.killpg(self._process.pid, signal.SIGKILL)
+            self._send_kill(pid)
             await asyncio.to_thread(self._process.wait)
         finally:
             self._process = None
+
+    # ── Platform-specific signal helpers ──
+
+    def _send_terminate(self) -> None:
+        """Send a graceful-termination signal to the process group."""
+        assert self._process is not None
+        if _IS_WINDOWS:
+            try:
+                self._process.send_signal(signal.CTRL_BREAK_EVENT)
+            except (OSError, ValueError):
+                self._process.terminate()
+        else:
+            try:
+                os.killpg(self._process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+    def _send_kill(self, pid: int) -> None:
+        """Force-kill the entire process tree."""
+        if _IS_WINDOWS:
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(pid)],
+                capture_output=True,
+            )
+        else:
+            try:
+                os.killpg(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
 
     # ── Health ──
 

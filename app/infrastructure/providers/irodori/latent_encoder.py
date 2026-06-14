@@ -24,7 +24,7 @@ class IrodoriLatentEncoder:
         codec_precision: str = "fp32",
     ) -> None:
         cmd = [
-            "uv", "run", "python", str(_BRIDGE_SCRIPT),
+            "uv", "run", "--no-sync", "python", str(_BRIDGE_SCRIPT),
             "--input-wav", ref_wav_path,
             "--output-pt", output_pt_path,
             "--checkpoint", checkpoint,

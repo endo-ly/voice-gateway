@@ -30,7 +30,15 @@ class Settings(BaseSettings):
     tmp_dir: str = "tmp"
     timeout_sec: int = 120
     max_concurrency: int = 1
-    irodori_repo_dir: str | None = None
+    irodori_repo_dir: str = ".vendor/Irodori-TTS"
+    irodori_backend: Literal["server", "cli"] = Field(default="server", validation_alias="IRODORI_BACKEND")
+    irodori_manage_server: bool = Field(default=False, validation_alias="IRODORI_MANAGE_SERVER")
+    irodori_server_base_url: str = Field(default="http://127.0.0.1:18790", validation_alias="IRODORI_SERVER_BASE_URL")
+    irodori_server_dir: str = Field(default=".vendor/Irodori-TTS-Server", validation_alias="IRODORI_SERVER_DIR")
+    irodori_server_host: str = Field(default="127.0.0.1", validation_alias="IRODORI_SERVER_HOST")
+    irodori_server_port: int = Field(default=18790, validation_alias="IRODORI_SERVER_PORT")
+    irodori_server_startup_timeout_sec: int = Field(default=300, validation_alias="IRODORI_SERVER_STARTUP_TIMEOUT_SEC")
+    irodori_server_api_key: str = Field(default="", validation_alias="IRODORI_SERVER_API_KEY")
     aivis_base_url: str = Field(default="http://127.0.0.1:10101", validation_alias="AIVIS_BASE_URL")
     aivis_manage_engine: bool = Field(default=False, validation_alias="AIVIS_MANAGE_ENGINE")
     aivis_engine_dir: str = ".vendor/AivisSpeech-Engine"
@@ -49,6 +57,7 @@ class Settings(BaseSettings):
         "assets_dir",
         "tmp_dir",
         "irodori_repo_dir",
+        "irodori_server_dir",
         "aivis_engine_dir",
         "reazonspeech_repo_dir",
         mode="before",
@@ -67,8 +76,8 @@ class Settings(BaseSettings):
         self.project_root = _normalize_path(self.project_root, str(_PROJECT_ROOT))
         self.assets_dir = _normalize_path(self.assets_dir, self.project_root)
         self.tmp_dir = _normalize_path(self.tmp_dir, self.project_root)
-        if self.irodori_repo_dir:
-            self.irodori_repo_dir = _normalize_path(self.irodori_repo_dir, self.project_root)
+        self.irodori_repo_dir = _normalize_path(self.irodori_repo_dir, self.project_root)
+        self.irodori_server_dir = _normalize_path(self.irodori_server_dir, self.project_root)
         self.aivis_engine_dir = _normalize_path(self.aivis_engine_dir, self.project_root)
         self.reazonspeech_repo_dir = _normalize_path(self.reazonspeech_repo_dir, self.project_root)
         return self
@@ -85,6 +94,20 @@ class Settings(BaseSettings):
     def validate_aivis_startup_timeout(cls, v):
         if v <= 0:
             raise ValueError("aivis_startup_timeout_sec must be a positive integer")
+        return v
+
+    @field_validator("irodori_server_startup_timeout_sec")
+    @classmethod
+    def validate_irodori_server_startup_timeout(cls, v):
+        if v <= 0:
+            raise ValueError("irodori_server_startup_timeout_sec must be a positive integer")
+        return v
+
+    @field_validator("irodori_server_port")
+    @classmethod
+    def validate_irodori_server_port(cls, v):
+        if not (1 <= v <= 65535):
+            raise ValueError("irodori_server_port must be between 1 and 65535")
         return v
 
     model_config = {

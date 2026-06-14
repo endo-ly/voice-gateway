@@ -69,6 +69,7 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
+            backend="cli",
         )
         assert p.provider_name == "irodori"
 
@@ -77,8 +78,9 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
+            backend="cli",
         )
-        provider._runner = FakeSubprocessRunner(wav_bytes=WAV_HEADER)
+        provider._client._runner = FakeSubprocessRunner(wav_bytes=WAV_HEADER)
 
         result = await provider.synthesize(_make_request())
         assert result.audio_bytes.startswith(b"RIFF")
@@ -90,9 +92,10 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir="tmp",
             base_dir=str(tmp_path),
+            backend="cli",
         )
         runner = FakeSubprocessRunner(wav_bytes=WAV_HEADER)
-        provider._runner = runner
+        provider._client._runner = runner
 
         await provider.synthesize(_make_request())
 
@@ -120,8 +123,9 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
+            backend="cli",
         )
-        provider._runner = TrackingRunner(wav_bytes=WAV_HEADER)
+        provider._client._runner = TrackingRunner(wav_bytes=WAV_HEADER)
         await provider.synthesize(_make_request())
 
         for f in created_files:
@@ -132,8 +136,9 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
+            backend="cli",
         )
-        provider._runner = FakeSubprocessRunner(wav_bytes=None)
+        provider._client._runner = FakeSubprocessRunner(wav_bytes=None)
 
         with pytest.raises(ProviderExecutionError):
             await provider.synthesize(_make_request())
@@ -143,8 +148,9 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
+            backend="cli",
         )
-        provider._runner = FakeSubprocessRunner(wav_bytes=b"")
+        provider._client._runner = FakeSubprocessRunner(wav_bytes=b"")
 
         with pytest.raises(ProviderExecutionError):
             await provider.synthesize(_make_request())
@@ -154,8 +160,31 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
+            backend="cli",
         )
         assert provider._semaphore._value == 1
+
+    def test_backend_server_creates_server_client(self, tmp_path):
+        from app.infrastructure.providers.irodori.server_client import IrodoriServerClient
+
+        provider = IrodoriProvider(
+            irodori_repo_dir="/opt/irodori",
+            tmp_dir=str(tmp_path),
+            base_dir=str(tmp_path),
+            backend="server",
+        )
+        assert isinstance(provider._client, IrodoriServerClient)
+
+    def test_backend_cli_creates_cli_client(self, tmp_path):
+        from app.infrastructure.providers.irodori.cli_client import IrodoriCliClient
+
+        provider = IrodoriProvider(
+            irodori_repo_dir="/opt/irodori",
+            tmp_dir=str(tmp_path),
+            base_dir=str(tmp_path),
+            backend="cli",
+        )
+        assert isinstance(provider._client, IrodoriCliClient)
 
     def test_concurrency_limit_custom(self, tmp_path):
         provider = IrodoriProvider(
@@ -163,6 +192,7 @@ class TestIrodoriProvider:
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
             max_concurrency=4,
+            backend="cli",
         )
         assert provider._semaphore._value == 4
 
@@ -171,6 +201,7 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
+            backend="cli",
         )
         with pytest.raises(InvalidProviderConfigError, match="checkpoint"):
             await provider.synthesize(
@@ -182,6 +213,7 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
+            backend="cli",
         )
         with pytest.raises(InvalidProviderConfigError, match="ref_latent_path"):
             await provider.synthesize(
@@ -193,6 +225,7 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
+            backend="cli",
         )
         with pytest.raises(InvalidProviderConfigError, match="caption"):
             await provider.synthesize(
@@ -207,7 +240,40 @@ class TestIrodoriProvider:
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
+            backend="cli",
         )
-        provider._runner = FakeSubprocessRunner(wav_bytes=WAV_HEADER)
+        provider._client._runner = FakeSubprocessRunner(wav_bytes=WAV_HEADER)
         result = await provider.synthesize(_make_request())
+        assert result.audio_bytes.startswith(b"RIFF")
+
+    async def test_server_backend_does_not_require_checkpoint(self, tmp_path, monkeypatch):
+        import httpx
+
+        async def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, content=WAV_HEADER)
+
+        transport = httpx.MockTransport(handler)
+        original = httpx.AsyncClient
+
+        def factory(*args, **kwargs):
+            kwargs["transport"] = transport
+            return original(*args, **kwargs)
+
+        monkeypatch.setattr(httpx, "AsyncClient", factory)
+
+        provider = IrodoriProvider(
+            irodori_repo_dir="/opt/irodori",
+            tmp_dir=str(tmp_path),
+            base_dir=str(tmp_path),
+            backend="server",
+        )
+        result = await provider.synthesize(
+            _make_request(
+                provider_config={
+                    "ref_wav_path": "/abs/ref.wav",
+                    "num_steps": 28,
+                    "seed": 0,
+                }
+            )
+        )
         assert result.audio_bytes.startswith(b"RIFF")

@@ -29,10 +29,6 @@ def _profile_path_value(path: str, base_dir: str) -> str:
 
 
 def _require_irodori_repo_dir(settings: Settings) -> str:
-    if not settings.irodori_repo_dir:
-        print("IRODORI_REPO_DIR is required for WAV-to-PT conversion")
-        raise SystemExit(1)
-
     repo_dir = Path(settings.irodori_repo_dir).expanduser()
     if not repo_dir.is_dir():
         print(f"IRODORI_REPO_DIR is not a directory: {settings.irodori_repo_dir}")

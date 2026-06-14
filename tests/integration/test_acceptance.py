@@ -1,5 +1,8 @@
 """Integration tests — acceptance criteria from plan.md §7.3."""
 
+import base64
+import json
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -150,3 +153,125 @@ class TestAcceptanceYamlValidation:
         for v in voices:
             assert v.voice_id
             assert v.display_name
+
+
+def _parse_sse(text: str) -> list[dict]:
+    events = []
+    current_event = None
+    current_data = None
+    for line in text.strip().split("\n"):
+        if line.startswith("event: "):
+            current_event = line[len("event: "):]
+        elif line.startswith("data: "):
+            current_data = line[len("data: "):]
+        elif line == "" and current_event is not None:
+            events.append({"event": current_event, "data": current_data})
+            current_event = None
+            current_data = None
+    if current_event is not None:
+        events.append({"event": current_event, "data": current_data})
+    return events
+
+
+class TestAcceptanceSpeechStream:
+    async def test_stream_returns_multiple_chunks_in_order(self, client):
+        resp = await client.post(
+            "/v1/speech/stream",
+            json={
+                "model": "tts-default",
+                "voice_id": "your-voice-name",
+                "speech_text": "一つ目の文です。二つ目の文です。三つ目の文です。",
+                "segment": {"enabled": True, "mode": "conversation"},
+            },
+        )
+        assert resp.status_code == 200
+        assert "text/event-stream" in resp.headers["content-type"]
+
+        events = _parse_sse(resp.text)
+        audio_chunks = [e for e in events if e["event"] == "audio_chunk"]
+        dones = [e for e in events if e["event"] == "done"]
+
+        assert len(audio_chunks) >= 2, "should produce multiple chunks"
+
+        for i, chunk in enumerate(audio_chunks):
+            data = json.loads(chunk["data"])
+            assert data["index"] == i, "chunks must be in index order"
+            assert data["format"] == "wav"
+            assert data["media_type"] == "audio/wav"
+            base64.b64decode(data["audio_base64"], validate=True)
+
+        assert len(dones) == 1
+        done_data = json.loads(dones[0]["data"])
+        assert done_data["chunks"] == len(audio_chunks)
+
+    async def test_stream_disabled_segment_single_chunk(self, client):
+        resp = await client.post(
+            "/v1/speech/stream",
+            json={
+                "model": "tts-default",
+                "voice_id": "your-voice-name",
+                "speech_text": "分割なしのテキストです。",
+                "segment": {"enabled": False},
+            },
+        )
+        assert resp.status_code == 200
+
+        events = _parse_sse(resp.text)
+        audio_chunks = [e for e in events if e["event"] == "audio_chunk"]
+        assert len(audio_chunks) == 1
+
+    async def test_stream_unknown_model_returns_error_event(self, client):
+        resp = await client.post(
+            "/v1/speech/stream",
+            json={
+                "model": "nonexistent",
+                "voice_id": "your-voice-name",
+                "speech_text": "テスト",
+            },
+        )
+        assert resp.status_code == 200
+
+        events = _parse_sse(resp.text)
+        errors = [e for e in events if e["event"] == "error"]
+        assert len(errors) >= 1
+        error_data = json.loads(errors[0]["data"])
+        assert "message" in error_data
+        assert "code" in error_data
+
+    async def test_stream_unknown_voice_returns_error_event(self, client):
+        resp = await client.post(
+            "/v1/speech/stream",
+            json={
+                "model": "tts-default",
+                "voice_id": "nonexistent-voice",
+                "speech_text": "テスト",
+            },
+        )
+        assert resp.status_code == 200
+
+        events = _parse_sse(resp.text)
+        errors = [e for e in events if e["event"] == "error"]
+        assert len(errors) >= 1
+
+    async def test_stream_first_chunk_is_short(self, client):
+        long_text = (
+            "なるほど。それならまずIrodori-TTS-Serverを"
+            "内部Engineとして扱うのがよいです。"
+        )
+        resp = await client.post(
+            "/v1/speech/stream",
+            json={
+                "model": "tts-default",
+                "voice_id": "your-voice-name",
+                "speech_text": long_text,
+                "segment": {"enabled": True, "mode": "conversation"},
+            },
+        )
+        assert resp.status_code == 200
+
+        events = _parse_sse(resp.text)
+        audio_chunks = [e for e in events if e["event"] == "audio_chunk"]
+        assert len(audio_chunks) >= 2
+
+        first_data = json.loads(audio_chunks[0]["data"])
+        assert first_data["text"] == "なるほど。"

@@ -12,9 +12,12 @@ from app.application.services.model_resolver import ModelResolver
 from app.application.services.option_merger import OptionMerger
 from app.application.services.tts_profile_resolver import TTSProfileResolver
 from app.application.services.tts_provider_registry import TTSProviderRegistry
+from app.application.services.speech_segmenter import SpeechSegmenter
+from app.application.services.speech_batch_synthesizer import SpeechBatchSynthesizer
 from app.application.services.stt_profile_resolver import STTProfileResolver
 from app.application.services.stt_provider_registry import STTProviderRegistry
 from app.application.use_cases.synthesize_speech import SynthesizeSpeech
+from app.application.use_cases.stream_speech import StreamSpeech
 from app.application.use_cases.transcribe_audio import TranscribeAudio
 from app.application.use_cases.get_latest_transcription import GetLatestTranscription
 from app.infrastructure.config.settings import Settings
@@ -26,6 +29,7 @@ from app.infrastructure.repositories.yaml_model_profile_repository import YamlMo
 from app.infrastructure.repositories.yaml_voice_profile_repository import YamlVoiceProfileRepository
 from app.infrastructure.repositories.in_memory_transcription_store import InMemoryTranscriptionStore
 from app.infrastructure.runtime.aivis_speech_engine_process import create_aivis_speech_engine_process
+from app.infrastructure.runtime.irodori_tts_server_process import create_irodori_tts_server_process
 
 
 @asynccontextmanager
@@ -70,6 +74,7 @@ if _mode in ("tts", "all"):
     from app.api.routes.voices import router as voices_router
     from app.api.routes.openai_speech import router as openai_speech_router
     from app.api.routes.native_speech import router as native_speech_router
+    from app.api.routes.speech_stream import router as speech_stream_router
 
     tts_models = [m for m in _model_repo.list_all() if m.direction == "tts"]
     configured_tts_providers = {m.provider for m in tts_models}
@@ -78,10 +83,13 @@ if _mode in ("tts", "all"):
         _tts_registry.register(FakeProvider())
 
     if "irodori" in configured_tts_providers:
-        if not _settings.irodori_repo_dir:
-            raise RuntimeError("IRODORI_REPO_DIR is required when irodori models are configured")
-        if not Path(_settings.irodori_repo_dir).is_dir():
-            raise RuntimeError(f"IRODORI_REPO_DIR is not a directory: {_settings.irodori_repo_dir}")
+        if _settings.irodori_backend == "cli":
+            if not Path(_settings.irodori_repo_dir).is_dir():
+                raise RuntimeError(f"IRODORI_REPO_DIR is not a directory: {_settings.irodori_repo_dir}")
+
+        if _settings.irodori_backend == "server" and _settings.irodori_manage_server:
+            app.state.managed_processes.append(create_irodori_tts_server_process(_settings))
+
         _tts_registry.register(
             IrodoriProvider(
                 irodori_repo_dir=_settings.irodori_repo_dir,
@@ -89,6 +97,9 @@ if _mode in ("tts", "all"):
                 base_dir=_settings.project_root,
                 timeout_sec=_settings.timeout_sec,
                 max_concurrency=_settings.max_concurrency,
+                backend=_settings.irodori_backend,
+                server_base_url=_settings.irodori_server_base_url,
+                server_api_key=_settings.irodori_server_api_key,
             )
         )
 
@@ -110,10 +121,21 @@ if _mode in ("tts", "all"):
     app.include_router(voices_router)
     app.include_router(openai_speech_router)
     app.include_router(native_speech_router)
+    app.include_router(speech_stream_router)
+
+    _segmenter = SpeechSegmenter()
+    _batch_synthesizer = SpeechBatchSynthesizer(
+        profile_resolver=_tts_resolver,
+        provider_registry=_tts_registry,
+    )
 
     app.state.synthesize_speech = SynthesizeSpeech(
         profile_resolver=_tts_resolver,
         provider_registry=_tts_registry,
+    )
+    app.state.stream_speech = StreamSpeech(
+        segmenter=_segmenter,
+        batch_synthesizer=_batch_synthesizer,
     )
     app.state.tts_provider_names = sorted(configured_tts_providers)
 
