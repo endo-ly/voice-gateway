@@ -175,14 +175,30 @@ voice-gatewayが提供する全エンドポイントの仕様。
 ### POST /v1/audio/speech
 
 OpenAI互換クライアント向けのTTS API。完全互換ではなく、必要最小限のsubset。
+`stream_format` パラメータでSSEストリーミング（チャンク分割配信）に切り替え可能。
 
 #### Request
+
+**通常（binary WAV）:**
 
 ```json
 {
   "model": "tts-default",
   "voice": "your-voice-name",
   "input": "こんにちは。今日は静かに話します。"
+}
+```
+
+**SSEストリーミング:**
+
+```json
+{
+  "model": "tts-default",
+  "voice": "your-voice-name",
+  "input": "なるほど。それでは始めましょう。長文の場合はチャンクに分割されます。",
+  "stream_format": "sse",
+  "segment": {"enabled": true, "mode": "conversation"},
+  "batch": {"max_concurrency": 1, "stop_on_error": true}
 }
 ```
 
@@ -193,10 +209,18 @@ OpenAI互換クライアント向けのTTS API。完全互換ではなく、必�
 | `input` | string | **Yes** | 読み上げテキスト。空文字不可 |
 | `response_format` | string | No | v0では `wav` のみ。省略時 `"wav"` |
 | `speed` | float | No | v0では `1.0` のみ。省略時 `1.0` |
+| `stream_format` | string \| null | No | `"sse"` を指定するとSSEストリーミング。省略時 `null`（binary） |
+| `segment.enabled` | bool | No | テキスト分割の有効/無効。省略時 `true`。SSE時のみ意味を持つ |
+| `segment.mode` | string | No | `"conversation"`（初回チャンク短め）または `"narration"`（長文向け）。省略時 `"conversation"` |
+| `batch.max_concurrency` | int | No | チャンク並列合成数（`>=1`）。省略時 `1`（順次） |
+| `batch.ordered` | bool | No | 結果を入力順に返す。省略時 `true` |
+| `batch.stop_on_error` | bool | No | エラー時にストリームを打ち切る。省略時 `true` |
+| `extra_options` | object | No | Provider固有の追加オプション。省略時 `{}` |
 
 > **Note**: OpenAI APIの `instructions` はv0未対応。送信するとバリデーションエラーになる。
+> `stream_format` は `"sse"` 以外の値を指定すると400エラーになる。
 
-#### Response (成功)
+#### Response — binary（`stream_format` 省略時）
 
 ```
 Status: 200
@@ -204,19 +228,44 @@ Content-Type: audio/wav
 Body: WAVバイナリ
 ```
 
+#### Response — SSE（`stream_format: "sse"` 時）
+
+```
+Status: 200
+Content-Type: text/event-stream; charset=utf-8
+```
+
+```text
+event: audio_chunk
+data: {"index":0,"text":"なるほど。","tts_text":"なるほど。","format":"wav","media_type":"audio/wav","audio_base64":"UklGRi..."}
+
+event: audio_chunk
+data: {"index":1,"text":"それでは始めましょう。","tts_text":"それでは始めましょう。","format":"wav","media_type":"audio/wav","audio_base64":"UklGRi..."}
+
+event: done
+data: {"chunks":2}
+```
+
+| SSEイベント | 説明 |
+|------------|------|
+| `audio_chunk` | 1チャンクの音声（base64エンコードWAV）。クライアント側でデコードが必要 |
+| `done` | 全チャンク配信完了。`chunks` に総チャンク数 |
+| `error` | エラー発生。`message` と `code` を含む。`stop_on_error=false` の場合は配信継続 |
+
 #### Response (エラー)
 
 | ステータス | code | 発生条件 |
 |-----------|------|---------|
 | 400 | `unsupported_response_format` | `response_format` が `wav` 以外 |
 | 400 | `unsupported_speed` | `speed` が `1.0` 以外 |
+| 400 | — | `stream_format` が `"sse"` 以外の値 |
 | 404 | `model_not_found` | 存在しない `model` |
 | 404 | `voice_not_found` | 存在しない `voice` |
 | 409 | `voice_binding_not_found` | voiceは存在するが、指定modelのbindingがない |
 | 500 | `provider_execution_error` | Provider実行失敗 |
 | 504 | `provider_timeout` | Provider timeout |
 
-エラー形式:
+エラー形式（binary時）:
 
 ```json
 {
@@ -228,6 +277,8 @@ Body: WAVバイナリ
   }
 }
 ```
+
+SSE時のエラーは `event: error` としてストリーム内に配信される（HTTPステータスは200）。
 
 ---
 
@@ -422,6 +473,9 @@ Status: 200
 | `input` | ✅ `--text` に渡す | ✅ `--text` に渡す |
 | `response_format` | `wav` のみ対応 | `wav` のみ対応 |
 | `speed` | `1.0` のみ対応 | `1.0` のみ対応 |
+| `stream_format` | ✅ `"sse"` でチャンク分割SSE配信 | ✅ `"sse"` でチャンク分割SSE配信 |
+| `segment` | ✅ Gateway側でテキスト分割制御 | ✅ Gateway側でテキスト分割制御 |
+| `batch` | ✅ `max_concurrency` / `stop_on_error` 適用 | ✅ `max_concurrency` / `stop_on_error` 適用 |
 
 #### POST /v1/speech
 
