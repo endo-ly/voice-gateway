@@ -144,6 +144,9 @@ class SpeechSegmenter:
                     best_pos = i + 1
                     break
 
+        if best_pos < 0:
+            best_pos = policy.first_chunk_max_chars
+
         if best_pos > 0:
             first_text = text[:best_pos].strip()
             rest_text = text[best_pos:].strip()

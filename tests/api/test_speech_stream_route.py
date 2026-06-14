@@ -43,7 +43,7 @@ def test_speech_stream_returns_sse(client):
         assert data["index"] == i
         assert data["format"] == "wav"
         assert data["media_type"] == "audio/wav"
-        base64.b64decode(data["audio_base64"])
+        base64.b64decode(data["audio_base64"], validate=True)
 
     done_data = json.loads(dones[0]["data"])
     assert done_data["chunks"] == len(audio_chunks)

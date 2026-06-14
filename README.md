@@ -133,7 +133,7 @@ curl -N -X POST http://127.0.0.1:8012/v1/speech/stream \
 
 レスポンスは `text/event-stream`。各チャンクが `audio_chunk` イベントとして順次返り、最後に `done` イベントが返る。
 
-```
+```text
 event: audio_chunk
 data: {"index":0,"text":"なるほど。","tts_text":"なるほど。","format":"wav","media_type":"audio/wav","audio_base64":"..."}
 

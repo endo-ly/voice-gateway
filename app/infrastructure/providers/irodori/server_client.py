@@ -54,11 +54,12 @@ class IrodoriServerClient:
                 timeout=self._timeout,
             ) as client:
                 logger.info(
-                    "IrodoriServerClient synthesize model=%s voice=%s engine=%s text=%r",
+                    "IrodoriServerClient synthesize model=%s voice=%s engine=%s text(length=%d, preview=%r)",
                     request.model_id,
                     request.voice_id,
                     request.engine,
-                    request.text,
+                    len(request.text),
+                    request.text[:20],
                 )
                 response = await client.post(
                     "/v1/audio/speech",

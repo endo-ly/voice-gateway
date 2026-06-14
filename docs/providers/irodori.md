@@ -339,7 +339,7 @@ uv run --no-sync python scripts/irodori_encode_latent.py \
 | 管理起動 | `IRODORI_MANAGE_SERVER=true` 時にGateway起動時にsubprocess起動 | `irodori_tts_server_process.py` が `ManagedHttpEngineProcess` を生成 |
 | 起動待ち | `/health` が200を返すまで待機 | timeoutは `IRODORI_SERVER_STARTUP_TIMEOUT_SEC`（デフォルト300秒） |
 | 二重起動防止 | 既に `/health` が応答する場合は新規起動しない | 外部で起動済みのIrodori-TTS-Serverを再利用 |
-| 停止 | Gateway停止時にSIGTERM送信 | `ManagedHttpEngineProcess.stop()` が実行 |
+| 停止 | Gateway停止時にプラットフォーム固有の終了シグナル送信（Unix: SIGTERM→SIGKILL、Windows: CTRL_BREAK→taskkill） | `ManagedHttpEngineProcess.stop()` が実行 |
 
 ## エラーハンドリング
 

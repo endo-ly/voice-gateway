@@ -67,7 +67,8 @@ class StreamSpeech:
                             "code": event.error.code,
                         },
                     )
-                    return
+                    if batch_policy.stop_on_error:
+                        return
 
                 if event.result is not None:
                     sent += 1

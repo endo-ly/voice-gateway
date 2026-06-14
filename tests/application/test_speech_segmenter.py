@@ -48,16 +48,16 @@ class TestSpeechSegmenterSplit:
         long_text = "なるほど、それならまずIrodori-TTS-Serverを内部Engineとして扱うのがよいです。"
         result = seg.segment(long_text, policy)
 
-        assert len(result[0].text) <= policy.normal_max_chars
+        assert len(result[0].text) <= policy.first_chunk_max_chars
 
     def test_short_chunks_are_merged(self):
         seg = SpeechSegmenter()
         policy = SpeechSegmentPolicy(min_chunk_chars=8)
         result = seg.segment("あ。い。う。えおかきくけこ。", policy)
 
+        assert len(result) < 4
         for chunk in result:
-            if chunk is not result[-1]:
-                pass
+            assert len(chunk.text) > 2
 
     def test_merge_short_last_chunk(self):
         seg = SpeechSegmenter()

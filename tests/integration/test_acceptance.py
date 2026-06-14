@@ -198,7 +198,7 @@ class TestAcceptanceSpeechStream:
             assert data["index"] == i, "chunks must be in index order"
             assert data["format"] == "wav"
             assert data["media_type"] == "audio/wav"
-            base64.b64decode(data["audio_base64"])
+            base64.b64decode(data["audio_base64"], validate=True)
 
         assert len(dones) == 1
         done_data = json.loads(dones[0]["data"])

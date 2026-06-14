@@ -55,6 +55,12 @@ class IrodoriProvider:
 
     def _validate_config(self, request: ProviderSynthesisRequest) -> None:
         if request.engine == "voicedesign":
+            if self._backend == "server":
+                raise InvalidProviderConfigError(
+                    self.provider_name,
+                    request.engine,
+                    "voicedesign engine is not supported with server backend",
+                )
             schema_cls = IrodoriVoiceDesignConfig
         elif self._backend == "server":
             schema_cls = IrodoriServerBaseConfig

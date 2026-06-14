@@ -103,7 +103,10 @@ class ManagedHttpEngineProcess:
             except (OSError, ValueError):
                 self._process.terminate()
         else:
-            os.killpg(self._process.pid, signal.SIGTERM)
+            try:
+                os.killpg(self._process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
 
     def _send_kill(self, pid: int) -> None:
         """Force-kill the entire process tree."""
@@ -113,7 +116,10 @@ class ManagedHttpEngineProcess:
                 capture_output=True,
             )
         else:
-            os.killpg(pid, signal.SIGKILL)
+            try:
+                os.killpg(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
 
     # ── Health ──
 

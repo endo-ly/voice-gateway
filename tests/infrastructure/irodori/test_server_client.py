@@ -220,3 +220,22 @@ async def test_server_client_raises_on_connection_error(monkeypatch):
     client = IrodoriServerClient(base_url="http://127.0.0.1:18790")
     with pytest.raises(ProviderExecutionError):
         await client.synthesize(_make_request())
+
+
+@pytest.mark.asyncio
+async def test_server_client_raises_timeout_on_timeout_exception(monkeypatch):
+    async def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.TimeoutException("read timeout")
+
+    transport = httpx.MockTransport(handler)
+    original_async_client = httpx.AsyncClient
+
+    def client_factory(*args, **kwargs):
+        kwargs["transport"] = transport
+        return original_async_client(*args, **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", client_factory)
+
+    client = IrodoriServerClient(base_url="http://127.0.0.1:18790")
+    with pytest.raises(ProviderTimeoutError):
+        await client.synthesize(_make_request())

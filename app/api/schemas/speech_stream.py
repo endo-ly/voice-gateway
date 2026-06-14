@@ -11,7 +11,7 @@ class SegmentOptions(BaseModel):
 
 
 class BatchOptions(BaseModel):
-    max_concurrency: int = 1
+    max_concurrency: int = Field(default=1, ge=1)
     ordered: bool = True
     stop_on_error: bool = True
 
