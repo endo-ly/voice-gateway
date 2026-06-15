@@ -97,9 +97,22 @@ curl http://127.0.0.1:8012/health
 
 ### TTS（音声合成）
 
+`voice` に指定する値はProviderにより異なる（[詳細](docs/configuration.md#providerによるvoice定義の違い)）。利用可能な一覧は `/v1/voices` で取得できる。
+
+```bash
+curl http://127.0.0.1:8012/v1/voices
+```
+
 **OpenAI互換:**
 
 ```bash
+# AivisSpeech（Engineのspeaker名がそのままvoice IDになる）
+curl -X POST http://127.0.0.1:8012/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{"model":"aivis-default","voice":"まお","input":"こんにちは"}' \
+  --output output.wav
+
+# Irodori（事前に assets/voices/<voice_id>/profile.yaml を作成しておく）
 curl -X POST http://127.0.0.1:8012/v1/audio/speech \
   -H "Content-Type: application/json" \
   -d '{"model":"tts-default","voice":"your-voice-name","input":"こんにちは"}' \

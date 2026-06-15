@@ -105,3 +105,56 @@ class TestYamlVoiceProfileRepository:
         repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
         with pytest.raises(InvalidProfileError, match="Duplicate voice id"):
             repo.list_all()
+
+    def test_register_appends_runtime_profile(self, tmp_path):
+        voices_dir = tmp_path / "voices"
+        voices_dir.mkdir()
+        repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
+
+        from app.domain.entities.voice_profile import (
+            VoiceBinding,
+            VoiceDefaults,
+            VoiceProfile,
+        )
+
+        profile = VoiceProfile(
+            voice_id="dynamic",
+            display_name="Dynamic",
+            defaults=VoiceDefaults(preferred_model="aivis-default"),
+            bindings={
+                "aivis-default": VoiceBinding(provider_config={"speaker": 1})
+            },
+        )
+
+        assert repo.register(profile) is True
+        loaded = repo.get_by_id("dynamic")
+        assert loaded.display_name == "Dynamic"
+        assert loaded.bindings["aivis-default"].provider_config == {"speaker": 1}
+
+    def test_register_returns_false_when_voice_id_exists_statically(self, tmp_path):
+        voices_dir = tmp_path / "voices"
+        static_dir = voices_dir / "static"
+        static_dir.mkdir(parents=True)
+        _write_yaml(str(static_dir / "profile.yaml"), {
+            "voice_id": "dup",
+            "display_name": "Static",
+        })
+        repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
+
+        from app.domain.entities.voice_profile import VoiceProfile
+
+        assert repo.register(VoiceProfile(voice_id="dup", display_name="Dynamic")) is False
+        assert repo.get_by_id("dup").display_name == "Static"
+
+    def test_register_does_not_trigger_duplicate_error_on_subsequent_list(
+        self, tmp_path
+    ):
+        voices_dir = tmp_path / "voices"
+        voices_dir.mkdir()
+        repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
+
+        from app.domain.entities.voice_profile import VoiceProfile
+
+        repo.register(VoiceProfile(voice_id="d1", display_name="D1"))
+        repo.register(VoiceProfile(voice_id="d1", display_name="D1-again"))
+        assert len(repo.list_all()) == 1

@@ -20,11 +20,13 @@ from app.application.use_cases.synthesize_speech import SynthesizeSpeech
 from app.application.use_cases.stream_speech import StreamSpeech
 from app.application.use_cases.transcribe_audio import TranscribeAudio
 from app.application.use_cases.get_latest_transcription import GetLatestTranscription
+from app.domain.errors import ProviderNotFoundError
 from app.infrastructure.config.settings import Settings
-from app.infrastructure.logging.logger import setup_logging
+from app.infrastructure.logging.logger import logger, setup_logging
 from app.infrastructure.providers.fake.provider import FakeProvider
 from app.infrastructure.providers.irodori.provider import IrodoriProvider
 from app.infrastructure.providers.aivis_speech.provider import AivisSpeechProvider
+from app.infrastructure.providers.aivis_speech.speaker_sync import speakers_to_voice_profiles
 from app.infrastructure.repositories.yaml_model_profile_repository import YamlModelProfileRepository
 from app.infrastructure.repositories.yaml_voice_profile_repository import YamlVoiceProfileRepository
 from app.infrastructure.repositories.in_memory_transcription_store import InMemoryTranscriptionStore
@@ -37,11 +39,42 @@ async def lifespan(app: FastAPI):
     managed_processes = app.state.managed_processes
     for process in managed_processes:
         await process.start()
+
+    await _discover_dynamic_voices(app)
+
     try:
         yield
     finally:
         for process in reversed(managed_processes):
             await process.stop()
+
+
+async def _discover_dynamic_voices(app: FastAPI) -> None:
+    registry = app.state.tts_registry
+    voice_repo = app.state.voice_repo
+
+    try:
+        provider = registry.get("aivis_speech")
+    except ProviderNotFoundError:
+        return
+
+    if not hasattr(provider, "list_speakers"):
+        return
+
+    try:
+        speakers = await provider.list_speakers()
+    except Exception as e:
+        logger.warning("AivisSpeech /speakers fetch failed; skipping dynamic voices: %s", e)
+        return
+
+    profiles = speakers_to_voice_profiles(speakers)
+    added = skipped = 0
+    for profile in profiles:
+        if voice_repo.register(profile):
+            added += 1
+        else:
+            skipped += 1
+    logger.info("AivisSpeech voices: %d registered, %d skipped (existing voice_id)", added, skipped)
 
 
 app = FastAPI(title="voice-gateway", version="0.1.0", lifespan=lifespan)

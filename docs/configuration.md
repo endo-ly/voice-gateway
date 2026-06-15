@@ -215,6 +215,22 @@ Engineの接続先と管理起動は環境変数で制御する。
 
 voiceは、論理的な声・人格IDである。特定のProviderに固定されない。TTSでのみ使用される。
 
+### Providerによるvoice定義の違い
+
+voiceの定義方法はProviderのアーキテクチャにより異なる。
+
+| 観点 | Irodori | AivisSpeech |
+|------|---------|-------------|
+| 定義方法 | `assets/voices/<voice_id>/profile.yaml` を手動作成 | Engineの `/speakers` を起動時にフェッチして自動生成 |
+| voice IDの決定者 | ユーザー（任意） | Engine側のspeaker名/style名 |
+| 必須ファイル | `ref.wav`, `ref_latent.pt` 等 | なし |
+| voice追加の手間 | ディレクトリ + profile.yaml + 参照音声 | Engine側でspeaker追加 → 再起動のみ |
+| 例 | `your-voice-name` | `まお`, `コハク`, `まお/あまあま` |
+
+Irodoriはゼロショット音声クローン用で、各voiceの参照音声をvoice-gateway側に持つため静的profileが必須。AivisSpeechはEngineがspeaker/style一覧を管理するため、起動時に `/speakers` から動的にvoiceを登録する（[詳細](providers/aivis-speech.md#動的voice発見)）。
+
+`/v1/voices` は静的profileと動的voiceをマージして返す。voice_idが衝突した場合は静的profileが優先される。
+
 ### 配置場所
 
 ```

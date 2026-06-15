@@ -68,3 +68,13 @@ class YamlVoiceProfileRepository:
 
     def get_profile_path(self, voice_id: str) -> Path:
         return self._voices_dir / voice_id / "profile.yaml"
+
+    def register(self, profile: VoiceProfile) -> bool:
+        """Append a runtime-constructed profile. Returns False if a profile
+        with the same voice_id already exists (static YAML wins)."""
+        profiles = self._load()
+        for existing in profiles:
+            if existing.voice_id == profile.voice_id:
+                return False
+        profiles.append(profile)
+        return True

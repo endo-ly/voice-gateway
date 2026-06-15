@@ -46,6 +46,24 @@ class AivisSpeechProvider:
             except httpx.HTTPError as e:
                 raise ProviderExecutionError(self.provider_name, str(e)) from e
 
+    async def list_speakers(self) -> list[dict[str, Any]]:
+        """Fetch the raw speaker list from AivisSpeech Engine's /speakers.
+
+        Returns AivisSpeech's native payload (list of speakers with styles).
+        Caller is responsible for converting to VoiceProfiles.
+        Raises ProviderExecutionError / ProviderTimeoutError on failure.
+        """
+        async with self._semaphore:
+            try:
+                async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout) as client:
+                    response = await client.get("/speakers")
+                    self._raise_for_status(response, "speakers")
+                    return response.json()
+            except httpx.TimeoutException as e:
+                raise ProviderTimeoutError(self.provider_name) from e
+            except httpx.HTTPError as e:
+                raise ProviderExecutionError(self.provider_name, str(e)) from e
+
     def _speaker_id(self, config: dict[str, Any]) -> int:
         speaker = config.get("speaker")
         if speaker is None:

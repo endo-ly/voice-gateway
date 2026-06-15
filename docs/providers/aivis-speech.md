@@ -17,6 +17,33 @@
 | 管理起動 (`AIVIS_MANAGE_ENGINE=true`) | Linux | プロセス管理に `os.killpg` / `SIGTERM` / `SIGKILL` を使用 |
 | 外部Engine (`AIVIS_MANAGE_ENGINE=false`) | Linux / Windows | 別途起動したEngineにHTTP接続のみ |
 
+## 動的voice発見
+
+Engine自身がspeaker/style一覧を管理するため、voice-gatewayは起動時に `/speakers` をフェッチして各speaker/styleをvoiceとして登録する。`assets/voices/` にprofile.yamlを置く必要はない。
+
+### 仕組み
+
+1. lifespanでAivisSpeech Engineの起動完了を待つ
+2. `AivisSpeechProvider.list_speakers()` で `/speakers` をGET
+3. `speaker_sync.speakers_to_voice_profiles()` で各speaker/styleを `VoiceProfile` に変換
+4. `YamlVoiceProfileRepository.register()` でvoice_repoに追加
+5. フェッチ失敗時はWARNログで継続（静的profileだけで稼働）
+
+実装は `app/infrastructure/providers/aivis_speech/speaker_sync.py`。
+
+### voice IDの規約
+
+| パターン | 意味 | 例 |
+|---------|------|------|
+| `<speaker_name>` | デフォルトstyle（"ノーマル"優先、なければ最初のstyle） | `まお`, `コハク` |
+| `<speaker_name>/<style_name>` | 個別style | `まお/あまあま`, `コハク/せつなめ` |
+
+`display_name` はデフォルトstyleが `<speaker_name>`、個別styleが `<speaker_name> (<style_name>)`。各voiceは `bindings["aivis-default"].provider_config = {"speaker": <style_id>}` を持つ。
+
+### 静的profileとの関係
+
+後方互換のため、`assets/voices/your-voice-name/profile.yaml` のようなAivisSpeech用の静的profileも引き続き機能する。ただし新規設定では不要。静的profileと動的voiceでvoice_idが衝突した場合は静的が優先される。
+
 ## 設定
 
 ### models.yaml

@@ -115,3 +115,58 @@ async def test_aivis_speech_health_returns_unreachable_on_connection_error():
 
     assert result["engineReachable"] is False
     assert result["baseUrl"] == "http://aivis.local"
+
+
+@pytest.mark.asyncio
+async def test_list_speakers_returns_raw_payload(monkeypatch):
+    payload = [
+        {
+            "name": "まお",
+            "speaker_uuid": "abc",
+            "styles": [{"name": "ノーマル", "id": 888753760, "type": "talk"}],
+        }
+    ]
+
+    captured_paths = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        captured_paths.append(request.url.path)
+        if request.url.path == "/speakers":
+            return httpx.Response(200, json=payload)
+        return httpx.Response(404)
+
+    transport = httpx.MockTransport(handler)
+    original_async_client = httpx.AsyncClient
+
+    def client_factory(*args, **kwargs):
+        kwargs["transport"] = transport
+        return original_async_client(*args, **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", client_factory)
+
+    provider = AivisSpeechProvider(base_url="http://aivis.local")
+    result = await provider.list_speakers()
+
+    assert result == payload
+    assert captured_paths == ["/speakers"]
+
+
+@pytest.mark.asyncio
+async def test_list_speakers_raises_provider_error_on_http_500(monkeypatch):
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500, text="internal error")
+
+    transport = httpx.MockTransport(handler)
+    original_async_client = httpx.AsyncClient
+
+    def client_factory(*args, **kwargs):
+        kwargs["transport"] = transport
+        return original_async_client(*args, **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", client_factory)
+
+    from app.domain.errors import ProviderExecutionError
+
+    provider = AivisSpeechProvider(base_url="http://aivis.local")
+    with pytest.raises(ProviderExecutionError):
+        await provider.list_speakers()
