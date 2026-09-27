@@ -466,26 +466,26 @@ Status: 200
 
 #### POST /v1/audio/speech
 
-| パラメータ | Irodori (base) | Irodori (voicedesign) |
-|-----------|---------------|----------------------|
-| `model` | ✅ ModelProfile解決に使用 | ✅ ModelProfile解決に使用 |
-| `voice` | ✅ VoiceProfile解決に使用 | ✅ VoiceProfile解決に使用 |
-| `input` | ✅ `--text` に渡す | ✅ `--text` に渡す |
-| `response_format` | `wav` のみ対応 | `wav` のみ対応 |
-| `speed` | `1.0` のみ対応 | `1.0` のみ対応 |
-| `stream_format` | ✅ `"sse"` でチャンク分割SSE配信 | ✅ `"sse"` でチャンク分割SSE配信 |
-| `segment` | ✅ Gateway側でテキスト分割制御 | ✅ Gateway側でテキスト分割制御 |
-| `batch` | ✅ `max_concurrency` / `stop_on_error` 適用 | ✅ `max_concurrency` / `stop_on_error` 適用 |
+| パラメータ | Irodori (base) |
+|-----------|---------------|
+| `model` | ✅ ModelProfile解決に使用 |
+| `voice` | ✅ VoiceProfile解決に使用 |
+| `input` | ✅ `--text` に渡す |
+| `response_format` | `wav` のみ対応 |
+| `speed` | `1.0` のみ対応 |
+| `stream_format` | ✅ `"sse"` でチャンク分割SSE配信 |
+| `segment` | ✅ Gateway側でテキスト分割制御 |
+| `batch` | ✅ `max_concurrency` / `stop_on_error` 適用 |
 
 #### POST /v1/speech
 
-| パラメータ | Irodori (base) | Irodori (voicedesign) |
-|-----------|---------------|----------------------|
-| `model` | ✅ ModelProfile解決に使用 | ✅ ModelProfile解決に使用 |
-| `voice_id` | ✅ VoiceProfile解決に使用 | ✅ VoiceProfile解決に使用 |
-| `speech_text` | ✅ `--text` に渡す | ✅ `--text` に渡す |
-| `response_format` | `wav` のみ対応 | `wav` のみ対応 |
-| `style_hints` | ⏭ v0では未使用（将来: Providerが解釈） | ⏭ v0では未使用（将来: Providerが解釈） |
+| パラメータ | Irodori (base) |
+|-----------|---------------|
+| `model` | ✅ ModelProfile解決に使用 |
+| `voice_id` | ✅ VoiceProfile解決に使用 |
+| `speech_text` | ✅ `--text` に渡す |
+| `response_format` | `wav` のみ対応 |
+| `style_hints` | ⏭ v0では未使用（将来: Providerが解釈） |
 
 #### YAML設定経由のIrodori固有パラメータ
 
@@ -493,18 +493,16 @@ APIのリクエストパラメータではなく、YAMLプロファイルの `pr
 
 | 設定キー | engine | 出処 | Irodori CLI引数 |
 |---------|--------|------|----------------|
-| `checkpoint` | base / voicedesign | ModelProfile | `--hf-checkpoint` |
-| `model_device` | base / voicedesign | ModelProfile | `--model-device` |
-| `codec_device` | base / voicedesign | ModelProfile | `--codec-device` |
-| `model_precision` | base / voicedesign | ModelProfile | `--model-precision` |
-| `codec_precision` | base / voicedesign | ModelProfile | `--codec-precision` |
+| `checkpoint` | base | ModelProfile | `--hf-checkpoint` |
+| `model_device` | base | ModelProfile | `--model-device` |
+| `codec_device` | base | ModelProfile | `--codec-device` |
+| `model_precision` | base | ModelProfile | `--model-precision` |
+| `codec_precision` | base | ModelProfile | `--codec-precision` |
 | `ref_latent_path` | base | VoiceBinding | `--ref-latent` |
 | `ref_wav_path` | base | VoiceBinding | `--ref-wav` |
-| `caption` | voicedesign | VoiceBinding | `--caption` |
-| `num_steps` | base / voicedesign | VoiceBinding | `--num-steps` |
-| `seed` | base / voicedesign | VoiceBinding | `--seed` |
-| `max_text_len` | base / voicedesign | ModelProfile / VoiceBinding | `--max-text-len` |
-| `max_caption_len` | base / voicedesign | ModelProfile / VoiceBinding | `--max-caption-len` |
+| `num_steps` | base | VoiceBinding | `--num-steps` |
+| `seed` | base | VoiceBinding | `--seed` |
+| `max_text_len` | base（CLI backendのみ） | ModelProfile / VoiceBinding | `--max-text-len` |
 | `speaker_kv_scale` | base | VoiceBinding | `--speaker-kv-scale` |
 
 > 詳細は [Provider: Irodori](providers/irodori.md) を参照。

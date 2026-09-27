@@ -79,7 +79,7 @@ class TestAcceptanceOpenAISpeech:
     async def test_voice_binding_missing_409(self, client):
         resp = await client.post(
             "/v1/audio/speech",
-            json={"model": "irodori-voicedesign", "voice": "your-voice-name", "input": "x"},
+            json={"model": "irodori-base", "voice": "your-voice-name", "input": "x"},
         )
         assert resp.status_code == 409
         assert resp.json()["error"]["code"] == "voice_binding_not_found"

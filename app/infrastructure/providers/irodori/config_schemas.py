@@ -21,7 +21,6 @@ class IrodoriBaseConfig(BaseModel):
     seed: int = 0
     speaker_kv_scale: float = 1.0
     max_text_len: int | None = None
-    max_caption_len: int | None = None
 
     @model_validator(mode="after")
     def validate_ref_source(self) -> "IrodoriBaseConfig":
@@ -52,18 +51,3 @@ class IrodoriServerBaseConfig(BaseModel):
                 "ref_latent_path or ref_wav_path is required for base engine"
             )
         return self
-
-
-class IrodoriVoiceDesignConfig(BaseModel):
-    """Merged config for Irodori VoiceDesign engine (caption-conditioned)."""
-
-    checkpoint: str
-    caption: str
-    model_device: str = "cpu"
-    codec_device: str = "cpu"
-    model_precision: str = "fp32"
-    codec_precision: str = "fp32"
-    num_steps: int = 28
-    seed: int = 0
-    max_text_len: int | None = None
-    max_caption_len: int | None = None

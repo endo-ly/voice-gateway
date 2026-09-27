@@ -43,8 +43,6 @@ voice-gatewayの全設定項目と、プロファイルの書き方を説明す�
 
 > ※ `IRODORI_REPO_DIR` は `IRODORI_BACKEND=cli` の場合のみ必須。`IRODORI_SERVER_DIR` は `IRODORI_MANAGE_SERVER=true` の場合のみ必須。`server` backend（デフォルト）で外部起動のIrodori-TTS-Serverを使う場合はどちらも不要。
 
-> **Note**: `engine: voicedesign` は `IRODORI_BACKEND=cli` でのみ使用可能。`server` backend では `InvalidProviderConfigError` になる。
-
 ### STT（ReazonSpeech）
 
 | 変数 | 必須 | デフォルト | 説明 |
@@ -92,7 +90,7 @@ models:
     object: model           # 固定値
     display_name: string    # 必須: 表示名
     provider: string        # 必須: Provider名 (irodori, reazonspeech_k2, fake 等)
-    engine: string          # 必須: engine名 (base, voicedesign, k2 等)
+    engine: string          # 必須: engine名 (base, k2 等)
     defaults: {}            # 省略可: デフォルト値（directionにより異なる）
     provider_config: {}     # 省略可: Provider固有設定
 ```
@@ -178,9 +176,8 @@ models:
 | `model_precision` | string | `bf16` または `fp32` |
 | `codec_precision` | string | `bf16` または `fp32` |
 | `max_text_len` | integer | 省略可。CLI backendのみ。Irodoriの `--max-text-len` に渡す |
-| `max_caption_len` | integer | 省略可。CLI backendのみ。Irodoriの `--max-caption-len` に渡す |
 
-> `checkpoint` / `codec_repo` / `*_device` / `*_precision` / `max_*_len` は server backend では送信されない（Irodori-TTS-Server側の設定が使われる）。
+> `checkpoint` / `codec_repo` / `*_device` / `*_precision` / `max_text_len` は server backend では送信されない（Irodori-TTS-Server側の設定が使われる）。
 
 #### ReazonSpeech K2 (engine: k2)
 
@@ -318,16 +315,6 @@ bindings:
 | `speaker_kv_scale` | float | 話者スケール |
 
 `ref_latent_path` と `ref_wav_path` はどちらか一方が必須。両方ある場合は `ref_latent_path` が優先される。
-
-#### engine: voicedesign
-
-> **制限**: `IRODORI_BACKEND=cli` でのみ使用可能。`server` backendでは拒否される。
-
-| キー | 型 | 説明 |
-|------|-----|------|
-| `caption` | string | 声のキャプション（テキスト記述） |
-| `seed` | int | 乱数シード |
-| `num_steps` | int | 生成ステップ数 |
 
 ---
 

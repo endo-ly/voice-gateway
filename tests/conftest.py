@@ -27,13 +27,13 @@ _TEST_IRODORI.mkdir(parents=True, exist_ok=True)
                     "provider_config": {},
                 },
                 {
-                    "id": "irodori-voicedesign",
+                    "id": "irodori-base",
                     "object": "model",
-                    "display_name": "Irodori VoiceDesign",
+                    "display_name": "Irodori Base",
                     "provider": "irodori",
-                    "engine": "voicedesign",
+                    "engine": "base",
                     "provider_config": {
-                        "checkpoint": "Aratako/Irodori-TTS-500M-v2-VoiceDesign",
+                        "checkpoint": "Aratako/Irodori-TTS-500M-v3",
                     },
                 },
             ]

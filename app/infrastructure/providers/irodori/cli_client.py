@@ -43,57 +43,33 @@ class IrodoriCliClient:
         output_path = self._resolve_for_subprocess(self._tmp_manager.create_temp_wav_path())
 
         try:
-            if request.engine == "voicedesign":
-                logger.info(
-                    "Irodori synthesize model=%s voice=%s engine=%s text=%r caption=%r",
-                    request.model_id,
-                    request.voice_id,
-                    request.engine,
-                    request.text,
-                    cfg["caption"],
+            ref_latent_path = self._resolve_optional_for_subprocess(cfg.get("ref_latent_path"))
+            ref_wav_path = self._resolve_optional_for_subprocess(cfg.get("ref_wav_path"))
+            logger.info(
+                "Irodori synthesize model=%s voice=%s engine=%s text=%r ref_latent=%s ref_wav=%s",
+                request.model_id,
+                request.voice_id,
+                request.engine,
+                request.text,
+                ref_latent_path,
+                ref_wav_path,
+            )
+            cmd = IrodoriCliBuilder.build_base_command(
+                checkpoint=cfg["checkpoint"],
+                text=request.text,
+                ref_latent_path=ref_latent_path,
+                ref_wav_path=ref_wav_path,
+                output_wav_path=output_path,
+                model_device=cfg.get("model_device", "cpu"),
+                codec_device=cfg.get("codec_device", "cpu"),
+                model_precision=cfg.get("model_precision", "fp32"),
+                codec_precision=cfg.get("codec_precision", "fp32"),
+                num_steps=cfg.get("num_steps", 28),
+                seed=cfg.get("seed", 0),
+                speaker_kv_scale=cfg.get("speaker_kv_scale", 1.0),
+                max_text_len=cfg.get("max_text_len"),
                 )
-                cmd = IrodoriCliBuilder.build_voicedesign_command(
-                    checkpoint=cfg["checkpoint"],
-                    text=request.text,
-                    caption=cfg["caption"],
-                    output_wav_path=output_path,
-                    model_device=cfg.get("model_device", "cpu"),
-                    codec_device=cfg.get("codec_device", "cpu"),
-                    model_precision=cfg.get("model_precision", "fp32"),
-                    codec_precision=cfg.get("codec_precision", "fp32"),
-                    num_steps=cfg.get("num_steps", 28),
-                    seed=cfg.get("seed", 0),
-                    max_text_len=cfg.get("max_text_len"),
-                    max_caption_len=cfg.get("max_caption_len"),
-                )
-            else:
-                ref_latent_path = self._resolve_optional_for_subprocess(cfg.get("ref_latent_path"))
-                ref_wav_path = self._resolve_optional_for_subprocess(cfg.get("ref_wav_path"))
-                logger.info(
-                    "Irodori synthesize model=%s voice=%s engine=%s text=%r ref_latent=%s ref_wav=%s",
-                    request.model_id,
-                    request.voice_id,
-                    request.engine,
-                    request.text,
-                    ref_latent_path,
-                    ref_wav_path,
-                )
-                cmd = IrodoriCliBuilder.build_base_command(
-                    checkpoint=cfg["checkpoint"],
-                    text=request.text,
-                    ref_latent_path=ref_latent_path,
-                    ref_wav_path=ref_wav_path,
-                    output_wav_path=output_path,
-                    model_device=cfg.get("model_device", "cpu"),
-                    codec_device=cfg.get("codec_device", "cpu"),
-                    model_precision=cfg.get("model_precision", "fp32"),
-                    codec_precision=cfg.get("codec_precision", "fp32"),
-                    num_steps=cfg.get("num_steps", 28),
-                    seed=cfg.get("seed", 0),
-                    speaker_kv_scale=cfg.get("speaker_kv_scale", 1.0),
-                    max_text_len=cfg.get("max_text_len"),
-                    max_caption_len=cfg.get("max_caption_len"),
-                )
+
 
             logger.debug("Irodori command cwd=%s argv=%r", self._irodori_repo_dir, cmd)
             await self._runner.run(cmd, cwd=self._irodori_repo_dir)

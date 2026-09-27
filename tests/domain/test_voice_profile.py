@@ -92,21 +92,15 @@ class TestVoiceProfile:
                         "speaker_kv_scale": 1.1,
                     }
                 },
-                "irodori-voicedesign": {
-                    "provider_config": {
-                        "caption": "20代前半の男性。落ち着いていて知的だがやわらかい。",
-                        "seed": 42,
-                        "num_steps": 28,
-                    }
+                "aivis-default": {
+                    "provider_config": {"speaker": 888753760}
                 },
             },
         }
         vp = VoiceProfile.model_validate(data)
         assert vp.voice_id == "egopulse"
         assert vp.bindings["tts-default"].provider_config["num_steps"] == 28
-        assert (
-            "やわらかい" in vp.bindings["irodori-voicedesign"].provider_config["caption"]
-        )
+        assert vp.bindings["aivis-default"].provider_config["speaker"] == 888753760
 
     def test_binding_missing_for_model(self):
         vp = VoiceProfile(

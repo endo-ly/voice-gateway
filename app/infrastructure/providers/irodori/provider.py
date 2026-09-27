@@ -12,7 +12,6 @@ from app.infrastructure.providers.irodori.cli_client import IrodoriCliClient
 from app.infrastructure.providers.irodori.config_schemas import (
     IrodoriBaseConfig,
     IrodoriServerBaseConfig,
-    IrodoriVoiceDesignConfig,
 )
 from app.infrastructure.providers.irodori.server_client import IrodoriServerClient
 
@@ -54,15 +53,13 @@ class IrodoriProvider:
             return await self._client.synthesize(request)
 
     def _validate_config(self, request: ProviderSynthesisRequest) -> None:
-        if request.engine == "voicedesign":
-            if self._backend == "server":
-                raise InvalidProviderConfigError(
-                    self.provider_name,
-                    request.engine,
-                    "voicedesign engine is not supported with server backend",
-                )
-            schema_cls = IrodoriVoiceDesignConfig
-        elif self._backend == "server":
+        if request.engine != "base":
+            raise InvalidProviderConfigError(
+                self.provider_name,
+                request.engine,
+                f"unsupported engine: {request.engine!r} (only 'base' is supported)",
+            )
+        if self._backend == "server":
             schema_cls = IrodoriServerBaseConfig
         else:
             schema_cls = IrodoriBaseConfig

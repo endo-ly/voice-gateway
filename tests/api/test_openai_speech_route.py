@@ -53,7 +53,7 @@ class TestOpenAISpeechRoute:
         resp = await client.post(
             "/v1/audio/speech",
             json={
-                "model": "irodori-voicedesign",
+                "model": "irodori-base",
                 "voice": "your-voice-name",
                 "input": "test",
             },

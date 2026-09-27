@@ -69,7 +69,7 @@ client (audio/wav)
 CLI backendとの違い:
 - `checkpoint`, `model_device`, `codec_device`, `model_precision`, `codec_precision` はサーバー側で管理されるため送信しない
 - `ref_wav_path` → `irodori.ref_wav`, `ref_latent_path` → `irodori.ref_latent` にキー名を変換
-- `max_text_len`, `max_caption_len` はサーバー側で管理されるため送信しない
+- `max_text_len` はサーバー側で管理されるため送信しない
 
 ### CLI backend（デバッグ用途）
 
@@ -173,35 +173,7 @@ uv run --no-sync python infer.py \
 
 `--ref-latent` と `--ref-wav` はどちらか一方が必須。両方ある場合は `--ref-latent` が使われる。
 
-### voicedesign engine（キャプション条件付き音声設計）
-
-> **制限**: `IRODORI_BACKEND=cli` でのみ使用可能。`server` backendでは `InvalidProviderConfigError` になる。
-
-テキストによる声の特徴の指定だけで推論する。参照音声不要。`engine: voicedesign` の場合に使用。
-
-```
-uv run --no-sync python infer.py \
-  --hf-checkpoint <checkpoint> \
-  --text <text> \
-  --caption <caption> \
-  --no-ref \
-  --output-wav <output_wav_path> \
-  --num-steps <num_steps> \
-  --seed <seed> \
-  --model-device <model_device> \
-  --codec-device <codec_device> \
-  --model-precision <model_precision> \
-  --codec-precision <codec_precision>
-```
-
-base engineとの違い:
-
-| 項目 | base | voicedesign |
-|------|------|-------------|
-| 参照音声 | `--ref-latent` / `--ref-wav` 必須 | `--no-ref`（参照なし） |
-| キャプション | なし | `--caption` で声の特徴を指定 |
-| `--speaker-kv-scale` | あり | なし |
-| チェックポイント | `Irodori-TTS-500M-v2` | `Irodori-TTS-500M-v2-VoiceDesign` |
+> VoiceDesign（キャプションによる声の設計）は voice-gateway では扱わない。声作りは Irodori-TTS の Gradio UI（`scripts/start-irodori-tts-voicedesign.bat`）で行い、作成した `ref.wav` と `generation_prompt` を voice profile に登録する。
 
 ## 設定の出処（5層マージ）
 
@@ -376,7 +348,7 @@ uv run --no-sync python scripts/irodori_encode_latent.py \
 | `app/infrastructure/providers/irodori/cli_client.py` | CLI subprocess呼び出しクライアント（cli backend） |
 | `app/infrastructure/providers/irodori/cli_builder.py` | CLIコマンド引数のlist[str]組み立て |
 | `app/infrastructure/providers/irodori/subprocess_runner.py` | asyncio.create_subprocess_exec のラッパー |
-| `app/infrastructure/providers/irodori/config_schemas.py` | provider_config validation（`IrodoriBaseConfig`, `IrodoriServerBaseConfig`, `IrodoriVoiceDesignConfig`） |
+| `app/infrastructure/providers/irodori/config_schemas.py` | provider_config validation（`IrodoriBaseConfig`, `IrodoriServerBaseConfig`） |
 | `app/infrastructure/runtime/irodori_tts_server_process.py` | Irodori-TTS-Server管理起動のfactory（`ManagedHttpEngineProcess`） |
 | `app/infrastructure/providers/irodori/latent_encoder.py` | WAV→PT変換の実行 |
 | `scripts/irodori_encode_latent.py` | Irodori環境内で動くエンコード用ブリッジスクリプト |

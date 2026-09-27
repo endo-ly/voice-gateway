@@ -26,7 +26,6 @@ _SERVER_ONLY_KEYS: frozenset[str] = frozenset({
     "checkpoint",
     "codec_repo",
     "max_text_len",
-    "max_caption_len",
 })
 
 _PATH_KEYS: frozenset[str] = frozenset({"ref_wav_path", "ref_latent_path"})

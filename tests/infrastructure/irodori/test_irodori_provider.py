@@ -23,7 +23,6 @@ def _make_request(**overrides) -> ProviderSynthesisRequest:
             "seed": 42,
             "num_steps": 28,
             "max_text_len": 1024,
-            "max_caption_len": 512,
             "speaker_kv_scale": 1.1,
             "model_device": "cpu",
             "codec_device": "cpu",
@@ -106,7 +105,7 @@ class TestIrodoriProvider:
             (tmp_path / "assets/voices/egopulse/ref_latent.pt").resolve()
         )
         assert cmd[cmd.index("--max-text-len") + 1] == "1024"
-        assert cmd[cmd.index("--max-caption-len") + 1] == "512"
+        assert "--max-caption-len" not in cmd
         assert Path(cmd[cmd.index("--output-wav") + 1]).is_absolute()
 
     async def test_tmp_wav_deleted_after_synthesize(self, tmp_path):
@@ -220,14 +219,14 @@ class TestIrodoriProvider:
                 _make_request(provider_config={"checkpoint": "Aratako/x"})
             )
 
-    async def test_voicedesign_missing_caption_raises_config_error(self, tmp_path):
+    async def test_non_base_engine_raises_config_error(self, tmp_path):
         provider = IrodoriProvider(
             irodori_repo_dir="/opt/irodori",
             tmp_dir=str(tmp_path),
             base_dir=str(tmp_path),
             backend="cli",
         )
-        with pytest.raises(InvalidProviderConfigError, match="caption"):
+        with pytest.raises(InvalidProviderConfigError, match="unsupported engine"):
             await provider.synthesize(
                 _make_request(
                     engine="voicedesign",

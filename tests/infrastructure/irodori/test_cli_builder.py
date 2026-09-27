@@ -39,7 +39,6 @@ class TestIrodoriCliBuilder:
             seed=42,
             speaker_kv_scale=1.1,
             max_text_len=1024,
-            max_caption_len=512,
         )
         cmd_str = " ".join(cmd)
         assert "--hf-checkpoint" in cmd_str
@@ -57,8 +56,6 @@ class TestIrodoriCliBuilder:
         assert "--codec-precision" in cmd_str
         assert "--max-text-len" in cmd_str
         assert "1024" in cmd_str
-        assert "--max-caption-len" in cmd_str
-        assert "512" in cmd_str
 
     def test_build_base_command_starts_with_uv_run(self):
         cmd = IrodoriCliBuilder.build_base_command(
@@ -133,35 +130,6 @@ class TestIrodoriCliBuilder:
                 seed=1,
                 speaker_kv_scale=1.0,
             )
-
-    # --- VoiceDesign (unchanged) ---
-
-    def test_build_voicedesign_command_includes_caption_and_no_ref(self):
-        cmd = IrodoriCliBuilder.build_voicedesign_command(
-            checkpoint="Aratako/Irodori-TTS-500M-v2-VoiceDesign",
-            text="こんにちは",
-            caption="20代前半の男性",
-            output_wav_path="tmp/out.wav",
-            model_device="cuda",
-            codec_device="cuda",
-            model_precision="bf16",
-            codec_precision="bf16",
-            num_steps=28,
-            seed=42,
-            max_text_len=1024,
-            max_caption_len=512,
-        )
-        cmd_str = " ".join(cmd)
-        assert "--caption" in cmd_str
-        assert "20代前半の男性" in cmd_str
-        assert "--no-ref" in cmd_str
-        assert "--max-text-len" in cmd_str
-        assert "1024" in cmd_str
-        assert "--max-caption-len" in cmd_str
-        assert "512" in cmd_str
-        # voicedesign should NOT have --ref-latent or --speaker-kv-scale
-        assert "--ref-latent" not in cmd_str
-        assert "--speaker-kv-scale" not in cmd_str
 
     def test_build_base_command_no_shell_injection_vector(self):
         """Ensure command is list[str], not a single shell string."""

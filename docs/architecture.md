@@ -163,7 +163,7 @@ TTSとSTTで共通する部分と方向固有の部分を明確に分けてい�
 | `YamlModelProfileRepository` | models.yamlの読み込み（safe_load + Pydantic validation、キャッシュ付き） |
 | `YamlVoiceProfileRepository` | voices/*/profile.yamlの読み込み |
 | `InMemoryTranscriptionStore` | 転写結果のインメモリ保持・最新1件の取得 |
-| `IrodoriProvider` | Irodori TTS Provider（server/cli backend切替、Semaphore、voicedesign+server拒否） |
+| `IrodoriProvider` | Irodori TTS Provider（server/cli backend切替、Semaphore、base engineのみ） |
 | `IrodoriServerClient` | Irodori-TTS-Server HTTP client（server backend） |
 | `IrodoriCliClient` | Irodori CLI subprocess client（cli backend） |
 | `IrodoriCliBuilder` | engine種別に応じたCLI引数のlist[str]組み立て |
