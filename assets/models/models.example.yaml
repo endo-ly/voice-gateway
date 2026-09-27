@@ -1,79 +1,76 @@
+# Model profiles exposed by voice-gateway.
+# Clients pass one of these ids as the API "model" value.
 models:
+  # Default Irodori TTS model.
+  # Voice profiles bind to this id under bindings.<model_id>.
   - id: tts-default
+    # Route this model through the TTS path. Required for /v1/audio/speech and /v1/speech.
     direction: tts
-    object: model
-    display_name: Default TTS
+    # Human-readable name for capability/model listings.
+    display_name: Irodori TTS
+    # Selects the voice-gateway provider implementation.
     provider: irodori
+    # Selects Irodori base voice-cloning behavior. In server backend this calls Irodori-TTS-Server.
     engine: base
-    defaults:
-      response_format: wav
-      speed: 1.0
-      timeout_sec: 120
     provider_config:
-      checkpoint: Aratako/Irodori-TTS-500M-v2
+      # Hugging Face checkpoint used by CLI backend and ref_latent materialization.
+      # Irodori-TTS-Server chooses its runtime checkpoint from its own IRODORI_HF_CHECKPOINT/IRODORI_CHECKPOINT settings.
+      checkpoint: Aratako/Irodori-TTS-500M-v3
+      # Codec repo used when voice-gateway generates ref_latent.pt from ref.wav.
+      codec_repo: Aratako/Semantic-DACVAE-Japanese-32dim
+      # Devices used by CLI backend and ref_latent materialization.
+      # Server backend ignores these because devices are configured in Irodori-TTS-Server.
       model_device: cuda
       codec_device: cuda
+      # Precision used by CLI backend and ref_latent materialization.
+      # Server backend ignores these because precision is configured in Irodori-TTS-Server.
       model_precision: fp32
       codec_precision: fp32
-      max_text_len: 1024
-      max_caption_len: 1024
 
-  - id: irodori-voicedesign
-    direction: tts
-    object: model
-    display_name: Irodori VoiceDesign
-    provider: irodori
-    engine: voicedesign
-    defaults:
-      response_format: wav
-      speed: 1.0
-      timeout_sec: 120
-    provider_config:
-      checkpoint: Aratako/Irodori-TTS-500M-v2-VoiceDesign
-      model_device: cuda
-      codec_device: cuda
-      model_precision: fp32
-      codec_precision: fp32
-      max_text_len: 1024
-      max_caption_len: 1024
-
+  # Built-in fake TTS provider for development, tests, and health/capability smoke checks.
+  # Keep this in the template so a minimal TTS route can be exercised without external engines.
   - id: tts-fake
+    # Fake provider is still a TTS model.
     direction: tts
-    object: model
+    # Human-readable name for model listings.
     display_name: Fake TTS
+    # Selects app.infrastructure.providers.fake.provider.FakeProvider.
     provider: fake
+    # The fake provider has no engine-specific behavior, but the field is required by ModelProfile.
     engine: base
-    defaults:
-      response_format: wav
-      speed: 1.0
-      timeout_sec: 120
-    provider_config: {}
 
+  # AivisSpeech TTS model. This demonstrates that voice-gateway is not Irodori-only.
+  # Provider-specific speaker selection belongs in each voice binding, not here.
   - id: aivis-default
+    # Route this model through the TTS path.
     direction: tts
-    object: model
+    # Human-readable name for model listings.
     display_name: AivisSpeech Engine
+    # Selects app.infrastructure.providers.aivis_speech.provider.AivisSpeechProvider.
     provider: aivis_speech
+    # Aivis uses a VOICEVOX-compatible HTTP API shape.
     engine: voicevox-compatible
-    defaults:
-      response_format: wav
-      speed: 1.0
-      timeout_sec: 120
     provider_config:
+      # Aivis output sample rate requested from the engine.
       output_sampling_rate: 24000
+      # Aivis output channel mode requested from the engine.
       output_stereo: false
 
-  # STT
+  # Default STT model. STT models do not use voice profiles.
   - id: stt-default
+    # Route this model through the STT path. Required for /v1/audio/transcriptions and /v1/transcribe.
     direction: stt
-    object: model
+    # Human-readable name for model listings.
     display_name: ReazonSpeech K2 v2
+    # Selects app.infrastructure.providers.reazonspeech_k2.provider.ReazonSpeechK2Provider.
     provider: reazonspeech_k2
+    # ReazonSpeech K2 engine id.
     engine: k2
     defaults:
+      # Default recognition language.
       language: ja
+      # Safety limit for submitted audio duration.
       max_audio_seconds: 30
-      timeout_sec: 120
     provider_config:
+      # Hugging Face model id used by the ReazonSpeech K2 provider.
       model_id: reazon-research/reazonspeech-k2-v2
-      precision: fp32

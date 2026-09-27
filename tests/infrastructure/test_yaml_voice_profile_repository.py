@@ -158,3 +158,22 @@ class TestYamlVoiceProfileRepository:
         repo.register(VoiceProfile(voice_id="d1", display_name="D1"))
         repo.register(VoiceProfile(voice_id="d1", display_name="D1-again"))
         assert len(repo.list_all()) == 1
+
+
+def test_generation_prompt_loaded_and_defaults_empty(tmp_path):
+    voices_dir = tmp_path / "voices"
+    (voices_dir / "with_prompt").mkdir(parents=True)
+    _write_yaml(str(voices_dir / "with_prompt" / "profile.yaml"), {
+        "voice_id": "with_prompt",
+        "display_name": "With Prompt",
+        "generation_prompt": "calm adult voice",
+    })
+    (voices_dir / "no_prompt").mkdir()
+    _write_yaml(str(voices_dir / "no_prompt" / "profile.yaml"), {
+        "voice_id": "no_prompt",
+        "display_name": "No Prompt",
+    })
+
+    repo = YamlVoiceProfileRepository(voices_dir=str(voices_dir))
+    assert repo.get_by_id("with_prompt").generation_prompt == "calm adult voice"
+    assert repo.get_by_id("no_prompt").generation_prompt == ""

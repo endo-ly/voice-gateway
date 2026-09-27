@@ -24,6 +24,7 @@ _SERVER_ONLY_KEYS: frozenset[str] = frozenset({
     "model_precision",
     "codec_precision",
     "checkpoint",
+    "codec_repo",
     "max_text_len",
     "max_caption_len",
 })

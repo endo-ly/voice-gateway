@@ -222,13 +222,12 @@ provider_config は5層の設定をマージして決定する。後の層が前
 **ModelProfile** (`models.yaml`):
 ```yaml
 provider_config:
-  checkpoint: Aratako/Irodori-TTS-500M-v2
+  checkpoint: Aratako/Irodori-TTS-500M-v3
+  codec_repo: Aratako/Semantic-DACVAE-Japanese-32dim
   model_device: cuda
   codec_device: cuda
   model_precision: fp32
   codec_precision: fp32
-  max_text_len: 1024
-  max_caption_len: 1024
 ```
 
 **VoiceBinding** (`profile.yaml`):
@@ -238,22 +237,21 @@ bindings:
     provider_config:
       ref_latent_path: assets/voices/your-voice-name/ref_latent.pt
       seed: 42
-      num_steps: 28
+      num_steps: 40
       speaker_kv_scale: 1.0
 ```
 
 **マージ後の provider_config**:
 ```yaml
-checkpoint: Aratako/Irodori-TTS-500M-v2
+checkpoint: Aratako/Irodori-TTS-500M-v3
+codec_repo: Aratako/Semantic-DACVAE-Japanese-32dim
 model_device: cuda
 codec_device: cuda
 model_precision: fp32
 codec_precision: fp32
-max_text_len: 1024
-max_caption_len: 1024
 ref_latent_path: assets/voices/your-voice-name/ref_latent.pt
 seed: 42
-num_steps: 28
+num_steps: 40
 speaker_kv_scale: 1.0
 ```
 

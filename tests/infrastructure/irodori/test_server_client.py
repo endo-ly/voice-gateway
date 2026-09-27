@@ -120,6 +120,7 @@ async def test_server_client_strips_cli_only_keys(monkeypatch):
         _make_request(
             provider_config={
                 "checkpoint": "Aratako/Irodori-TTS-500M-v2",
+                "codec_repo": "Aratako/Semantic-DACVAE-Japanese-32dim",
                 "ref_wav_path": "/abs/path/to/ref.wav",
                 "model_device": "cuda",
                 "codec_device": "cuda",
@@ -133,6 +134,7 @@ async def test_server_client_strips_cli_only_keys(monkeypatch):
 
     irodori = sent_payloads[0]["irodori"]
     assert "checkpoint" not in irodori
+    assert "codec_repo" not in irodori
     assert "model_device" not in irodori
     assert "codec_device" not in irodori
     assert "model_precision" not in irodori

@@ -19,5 +19,6 @@ class VoiceProfile(BaseModel):
     voice_id: str
     display_name: str
     description: str = ""
+    generation_prompt: str = ""
     defaults: VoiceDefaults = Field(default_factory=VoiceDefaults)
     bindings: dict[str, VoiceBinding] = Field(default_factory=dict)

@@ -1,24 +1,60 @@
+# Voice profile for one logical voice_id.
+# Put this file at assets/voices/<voice_id>/profile.yaml.
+
+# Logical voice id used by clients as the API "voice" / "voice_id" value.
 voice_id: your-voice-name
+# Human-readable display name returned by voice listing APIs.
 display_name: your-voice-name
-description: ここに声の説明を書く
+# Human-readable notes about this voice. This is descriptive metadata, not an Irodori option.
+description: Write a short human-readable description of this voice.
+
+# Prompt used when creating or designing this voice.
+# This is kept for future regeneration/tuning and is not sent to Irodori base synthesis.
+generation_prompt: |
+  Write the prompt used when creating this voice.
+  Example: calm adult female voice, soft medium-low tone, close distance, restrained emotion.
 
 defaults:
+  # Default model used by clients/tools that choose a voice first and omit an explicit model.
   preferred_model: tts-default
+  # Default output format for this voice. voice-gateway currently supports wav output.
   response_format: wav
+  # Default OpenAI-style speed value. Keep this explicit even when using 1.0.
   speed: 1.0
 
 bindings:
+  # Irodori binding for this voice. The key must match a model id in assets/models/models.yaml.
   tts-default:
     provider_config:
+      # Reference WAV for this voice. Used directly if ref_latent_path is absent.
+      # Also used by build-ref-latent/materialize-ref-latents to create ref_latent.pt.
       ref_wav_path: assets/voices/your-voice-name/ref.wav
+      # Precomputed Irodori codec latent for the reference voice. Preferred over ref_wav_path at synthesis time.
       ref_latent_path: assets/voices/your-voice-name/ref_latent.pt
+      # Fixed random seed for reproducible synthesis from this voice.
       seed: 42
-      num_steps: 28
+      # Diffusion steps. Higher can improve quality/stability but increases latency.
+      num_steps: 40
+      # Speaker/reference conditioning strength. Tune per voice when the reference identity is too weak or too strong.
       speaker_kv_scale: 1.0
+      # V3 duration multiplier. Larger is slower/longer, smaller is faster/shorter.
+      duration_scale: 1.0
+      # Text guidance strength in Irodori-TTS-Server.
+      cfg_scale_text: 3.0
+      # Speaker/reference guidance strength in Irodori-TTS-Server.
+      cfg_scale_speaker: 5.0
+      # Maximum reference duration used by Irodori-TTS-Server. Long refs/latents are trimmed to this bound.
+      max_ref_seconds: 30.0
 
+  # Development/test binding for the built-in fake TTS provider.
+  # This lets the same logical voice be used with model=tts-fake without external engines or voice assets.
   tts-fake:
+    # FakeProvider ignores provider_config.
     provider_config: {}
 
+  # AivisSpeech binding for this logical voice.
+  # The Aivis speaker/style id is voice-specific, so it lives in the voice binding.
   aivis-default:
     provider_config:
+      # AivisSpeech speaker/style id for this voice.
       speaker: 888753760

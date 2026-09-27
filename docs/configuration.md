@@ -118,7 +118,8 @@ models:
       speed: 1.0
       timeout_sec: 120
     provider_config:
-      checkpoint: Aratako/Irodori-TTS-500M-v2
+      checkpoint: Aratako/Irodori-TTS-500M-v3
+      codec_repo: Aratako/Semantic-DACVAE-Japanese-32dim
       model_device: cuda
       codec_device: cuda
       model_precision: fp32
@@ -150,7 +151,6 @@ models:
       speed: 1.0
       timeout_sec: 120
     provider_config:
-      speaker: 888753760
       output_sampling_rate: 24000
       output_stereo: false
 
@@ -172,12 +172,15 @@ models:
 | キー | 型 | 説明 |
 |------|-----|------|
 | `checkpoint` | string | HuggingFace checkpoint名 |
+| `codec_repo` | string | ref_latent生成時に使うcodec repo |
 | `model_device` | string | `cuda` または `cpu` |
 | `codec_device` | string | `cuda` または `cpu` |
 | `model_precision` | string | `bf16` または `fp32` |
 | `codec_precision` | string | `bf16` または `fp32` |
-| `max_text_len` | integer | 省略可。Irodoriの `--max-text-len` に渡す最大テキストトークン長 |
-| `max_caption_len` | integer | 省略可。Irodoriの `--max-caption-len` に渡す最大キャプショントークン長 |
+| `max_text_len` | integer | 省略可。CLI backendのみ。Irodoriの `--max-text-len` に渡す |
+| `max_caption_len` | integer | 省略可。CLI backendのみ。Irodoriの `--max-caption-len` に渡す |
+
+> `checkpoint` / `codec_repo` / `*_device` / `*_precision` / `max_*_len` は server backend では送信されない（Irodori-TTS-Server側の設定が使われる）。
 
 #### ReazonSpeech K2 (engine: k2)
 
@@ -245,6 +248,7 @@ assets/voices/<voice_id>/profile.yaml
 voice_id: string            # 必須: voice識別子（ディレクトリ名と一致させる）
 display_name: string        # 必須: 表示名
 description: string         # 省略可: 説明
+generation_prompt: string   # 省略可: 声を作成・設計したときのプロンプト。base合成には送られない
 
 defaults:                   # 省略可: デフォルト値
   preferred_model: tts-default
@@ -261,7 +265,11 @@ bindings:                   # model_idごとの設定
 ```yaml
 voice_id: your-voice-name
 display_name: your-voice-name
-description: 静かで知的、近い距離感の男性声
+description: 静かで知的、近い距離感の声
+
+generation_prompt: |
+  声を作成・設計したときのプロンプトを残す。
+  base合成には送られず、再生成・調整時の運用情報として使う。
 
 defaults:
   preferred_model: tts-default
@@ -272,15 +280,21 @@ bindings:
   tts-default:
     provider_config:
       ref_wav_path: assets/voices/your-voice-name/ref.wav
+      ref_latent_path: assets/voices/your-voice-name/ref_latent.pt
       seed: 42
-      num_steps: 28
-      speaker_kv_scale: 1.1
+      num_steps: 40
+      speaker_kv_scale: 1.0
+      duration_scale: 1.0
+      cfg_scale_text: 3.0
+      cfg_scale_speaker: 5.0
+      max_ref_seconds: 30.0
 
-  irodori-voicedesign:
+  tts-fake:
+    provider_config: {}
+
+  aivis-default:
     provider_config:
-      caption: 20代前半の男性。落ち着いていて知的だがやわらかい。距離感は近め。
-      seed: 42
-      num_steps: 28
+      speaker: 888753760
 ```
 
 ### bindingsのキーについて
@@ -339,22 +353,23 @@ bindings:
 1. ModelDefaults:     {response_format: wav, speed: 1.0, timeout_sec: 120}
 2. VoiceDefaults:     {preferred_model: tts-default, response_format: wav, speed: 1.0}
 3. Model provider:    {checkpoint: ..., model_device: cuda, codec_device: cuda, ...}
-4. Voice binding:     {ref_wav_path: ..., seed: 42, num_steps: 28, speaker_kv_scale: 1.1}
+4. Voice binding:     {ref_wav_path: ..., seed: 42, num_steps: 40, speaker_kv_scale: 1.0}
 5. Request:           {}
 ```
 
 最終的にProviderに渡る設定:
 
 ```yaml
-checkpoint: Aratako/Irodori-TTS-500M-v2
+checkpoint: Aratako/Irodori-TTS-500M-v3
+codec_repo: Aratako/Semantic-DACVAE-Japanese-32dim
 model_device: cuda
 codec_device: cuda
 model_precision: fp32
 codec_precision: fp32
 ref_wav_path: assets/voices/your-voice-name/ref.wav
 seed: 42
-num_steps: 28
-speaker_kv_scale: 1.1
+num_steps: 40
+speaker_kv_scale: 1.0
 response_format: wav
 speed: 1.0
 timeout_sec: 120
