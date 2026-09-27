@@ -12,6 +12,19 @@ Irodoriは **server** と **CLI** の2つのbackendを持つ。`IRODORI_BACKEND`
 | `server`（デフォルト） | Irodori-TTS-Server（HTTP） | Gateway内部HTTP Engineとして管理起動し、HTTP APIで呼び出す |
 | `cli` | CLIサブプロセス | `infer.py` をsubprocess実行する。比較・デバッグ用途 |
 
+### 対応モデル
+
+Irodori-TTS / Irodori-TTS-Server の `main` は v4/v4.1 系（`Aratako/Irodori-TTS-v4.1-Small`）を対象とし、v2/v3 checkpointとも後方互換。
+
+| checkpoint | 特徴 |
+|------------|------|
+| `Aratako/Irodori-TTS-v4.1-Small` | 推奨。voice cloning + caption による話し方制御を1モデルで扱う。参照音声は最大120秒 |
+| `Aratako/Irodori-TTS-v4.1-Small-MF` | MeanFlow蒸留版。既定4ステップで高速。CFG設定は無視される |
+| `Aratako/Irodori-TTS-v4.1-Small-Quantized/<variant>` | 量子化版（省メモリ） |
+
+server backendで実際に使われるcheckpointはServer側の設定で決まる。管理起動の場合は `IRODORI_SERVER_HF_CHECKPOINT` で指定し、`models.yaml` の `checkpoint`（CLI backendとref_latent生成で使用）と揃えておく。
+v2/v3/v4 は同じcodec（`Aratako/Semantic-DACVAE-Japanese-32dim`）を使うため、既存の `ref_latent.pt` はそのまま利用できる。
+
 ### server backend（デフォルト）
 
 [Irodori-TTS-Server](https://github.com/Aratako/Irodori-TTS-Server) をGateway内部HTTP Engineとして扱う。
@@ -62,9 +75,10 @@ client (audio/wav)
 | `irodori.chunking_enabled` | 固定 `false` | Gateway側でチャンキングするため、サーバー側はOFF |
 | `irodori.ref_wav` | provider_config (`ref_wav_path`) | 参照音声のWAVパス |
 | `irodori.ref_latent` | provider_config (`ref_latent_path`) | 参照音声のlatent tensorパス（ref_wavより優先） |
-| `irodori.num_steps` | provider_config | 推論ステップ数。デフォルト28 |
+| `irodori.num_steps` | provider_config | 推論ステップ数。省略時はcheckpoint既定（RF: 40, MeanFlow: 4） |
 | `irodori.seed` | provider_config | 乱数シード。デフォルト0 |
 | `irodori.speaker_kv_scale` | provider_config | 話者特徴の強さ。デフォルト1.0 |
+| `irodori.*`（その他） | provider_config | 上記以外のキー（`duration_scale`, `cfg_scale_text`, `cfg_scale_speaker`, `max_ref_seconds`, `caption` 等）はそのまま `irodori` に渡す |
 
 CLI backendとの違い:
 - `checkpoint`, `model_device`, `codec_device`, `model_precision`, `codec_precision` はサーバー側で管理されるため送信しない
@@ -163,7 +177,7 @@ uv run --no-sync python infer.py \
 | `--ref-latent` | str | VoiceBinding.provider_config | 参照音声のlatent tensor（.pt）。`--ref-wav` より優先 |
 | `--ref-wav` | str | VoiceBinding.provider_config | 参照音声のWAVファイル。`--ref-latent` が無い場合に使用 |
 | `--output-wav` | str | 内部生成（tmp） | 出力先WAVパス。推論後に読み込んで削除 |
-| `--num-steps` | int | VoiceBinding.provider_config | 推論ステップ数。デフォルト28 |
+| `--num-steps` | int | VoiceBinding.provider_config | 推論ステップ数。省略時は渡さず、checkpoint既定（RF: 40, MeanFlow: 4）を使う |
 | `--seed` | int | VoiceBinding.provider_config | 乱数シード。デフォルト0 |
 | `--speaker-kv-scale` | float | VoiceBinding.provider_config | 話者特徴の強さ。デフォルト1.0 |
 | `--model-device` | str | ModelProfile.provider_config | モデル推論デバイス（`cpu` / `cuda`） |
@@ -194,7 +208,7 @@ provider_config は5層の設定をマージして決定する。後の層が前
 **ModelProfile** (`models.yaml`):
 ```yaml
 provider_config:
-  checkpoint: Aratako/Irodori-TTS-500M-v3
+  checkpoint: Aratako/Irodori-TTS-v4.1-Small
   codec_repo: Aratako/Semantic-DACVAE-Japanese-32dim
   model_device: cuda
   codec_device: cuda
@@ -215,7 +229,7 @@ bindings:
 
 **マージ後の provider_config**:
 ```yaml
-checkpoint: Aratako/Irodori-TTS-500M-v3
+checkpoint: Aratako/Irodori-TTS-v4.1-Small
 codec_repo: Aratako/Semantic-DACVAE-Japanese-32dim
 model_device: cuda
 codec_device: cuda

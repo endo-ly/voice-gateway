@@ -14,8 +14,10 @@ models:
     engine: base
     provider_config:
       # Hugging Face checkpoint used by CLI backend and ref_latent materialization.
-      # Irodori-TTS-Server chooses its runtime checkpoint from its own IRODORI_HF_CHECKPOINT/IRODORI_CHECKPOINT settings.
-      checkpoint: Aratako/Irodori-TTS-500M-v3
+      # Server backend ignores this: the server loads the checkpoint given by IRODORI_SERVER_HF_CHECKPOINT
+      # (managed server) or by its own IRODORI_HF_CHECKPOINT/IRODORI_CHECKPOINT settings. Keep them in sync.
+      # Use Aratako/Irodori-TTS-v4.1-Small-MF for fast MeanFlow (few-step) inference.
+      checkpoint: Aratako/Irodori-TTS-v4.1-Small
       # Codec repo used when voice-gateway generates ref_latent.pt from ref.wav.
       codec_repo: Aratako/Semantic-DACVAE-Japanese-32dim
       # Devices used by CLI backend and ref_latent materialization.

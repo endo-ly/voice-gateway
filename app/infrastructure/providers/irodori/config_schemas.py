@@ -17,9 +17,9 @@ class IrodoriBaseConfig(BaseModel):
     codec_device: str = "cpu"
     model_precision: str = "fp32"
     codec_precision: str = "fp32"
-    num_steps: int = 28
+    num_steps: int | None = None
     seed: int = 0
-    speaker_kv_scale: float = 1.0
+    speaker_kv_scale: float | None = None
     max_text_len: int | None = None
 
     @model_validator(mode="after")
@@ -40,9 +40,9 @@ class IrodoriServerBaseConfig(BaseModel):
 
     ref_latent_path: str | None = None
     ref_wav_path: str | None = None
-    num_steps: int = 28
+    num_steps: int | None = None
     seed: int = 0
-    speaker_kv_scale: float = 1.0
+    speaker_kv_scale: float | None = None
 
     @model_validator(mode="after")
     def validate_ref_source(self) -> "IrodoriServerBaseConfig":

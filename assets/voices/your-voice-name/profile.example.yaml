@@ -33,18 +33,22 @@ bindings:
       ref_latent_path: assets/voices/your-voice-name/ref_latent.pt
       # Fixed random seed for reproducible synthesis from this voice.
       seed: 42
-      # Diffusion steps. Higher can improve quality/stability but increases latency.
-      num_steps: 40
+      # Sampling steps. Omit to use the checkpoint default (RF: 40, MeanFlow: 4).
+      # Higher can improve quality/stability but increases latency.
+      # num_steps: 40
       # Speaker/reference conditioning strength. Tune per voice when the reference identity is too weak or too strong.
       speaker_kv_scale: 1.0
       # V3 duration multiplier. Larger is slower/longer, smaller is faster/shorter.
       duration_scale: 1.0
-      # Text guidance strength in Irodori-TTS-Server.
+      # Text guidance strength in Irodori-TTS-Server. CFG settings are ignored by MeanFlow checkpoints.
       cfg_scale_text: 3.0
       # Speaker/reference guidance strength in Irodori-TTS-Server.
       cfg_scale_speaker: 5.0
-      # Maximum reference duration used by Irodori-TTS-Server. Long refs/latents are trimmed to this bound.
-      max_ref_seconds: 30.0
+      # Maximum reference duration. Omit to use the checkpoint limit (v4: 120s, legacy v2/v3: 30s).
+      # max_ref_seconds: 120.0
+      # Optional style/emotion description (v4 caption conditioning, server backend only).
+      # The reference audio still supplies the speaker identity.
+      # caption: 落ち着いた丁寧な話し方。
 
   # Development/test binding for the built-in fake TTS provider.
   # This lets the same logical voice be used with model=tts-fake without external engines or voice assets.

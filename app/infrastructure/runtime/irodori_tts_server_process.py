@@ -8,6 +8,9 @@ IRODORI_SERVER_HEALTH_PATH = "/health"
 
 def create_irodori_tts_server_process(settings: Settings) -> ManagedHttpEngineProcess:
     """Create the managed process definition for Irodori-TTS-Server."""
+    env: dict[str, str] = {}
+    if settings.irodori_server_hf_checkpoint:
+        env["IRODORI_HF_CHECKPOINT"] = settings.irodori_server_hf_checkpoint
     return ManagedHttpEngineProcess(
         name="Irodori-TTS-Server",
         base_url=settings.irodori_server_base_url,
@@ -26,4 +29,5 @@ def create_irodori_tts_server_process(settings: Settings) -> ManagedHttpEnginePr
             str(settings.irodori_server_port),
         ],
         startup_timeout_sec=settings.irodori_server_startup_timeout_sec,
+        env=env,
     )

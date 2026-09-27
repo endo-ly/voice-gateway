@@ -228,6 +228,7 @@ curl http://127.0.0.1:8012/v1/voices
 | `IRODORI_SERVER_PORT` | `18790` | Irodori-TTS-Server起動時のポート |
 | `IRODORI_SERVER_STARTUP_TIMEOUT_SEC` | `300` | Irodori-TTS-Server起動待ちタイムアウト（秒） |
 | `IRODORI_SERVER_API_KEY` | — | Irodori-TTS-Server側API keyを設定している場合に利用 |
+| `IRODORI_SERVER_HF_CHECKPOINT` | — | 管理起動するIrodori-TTS-Serverのcheckpoint（例: `Aratako/Irodori-TTS-v4.1-Small`）。未設定ならServerの既定値 |
 | `AIVIS_BASE_URL` | `http://127.0.0.1:10101` | AivisSpeech EngineのURL |
 | `AIVIS_MANAGE_ENGINE` | `false` | `true` の場合、voice-gateway起動時にAivisSpeech Engineも起動する |
 | `AIVIS_ENGINE_DIR` | `.vendor/AivisSpeech-Engine` | 管理起動するAivisSpeech Engineのディレクトリ |

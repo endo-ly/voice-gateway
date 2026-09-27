@@ -40,6 +40,7 @@ voice-gatewayの全設定項目と、プロファイルの書き方を説明す�
 | `IRODORI_SERVER_PORT` | No | `18790` | 管理起動時のIrodori-TTS-Server listen port |
 | `IRODORI_SERVER_STARTUP_TIMEOUT_SEC` | No | `300` | Irodori-TTS-Server起動待ちタイムアウト（秒） |
 | `IRODORI_SERVER_API_KEY` | No | なし | Irodori-TTS-ServerのAPIキー（サーバー側で設定している場合） |
+| `IRODORI_SERVER_HF_CHECKPOINT` | No | なし | 管理起動するIrodori-TTS-Serverに `IRODORI_HF_CHECKPOINT` として渡すcheckpoint（例: `Aratako/Irodori-TTS-v4.1-Small`）。未設定ならServerの既定値 |
 
 > ※ `IRODORI_REPO_DIR` は `IRODORI_BACKEND=cli` の場合のみ必須。`IRODORI_SERVER_DIR` は `IRODORI_MANAGE_SERVER=true` の場合のみ必須。`server` backend（デフォルト）で外部起動のIrodori-TTS-Serverを使う場合はどちらも不要。
 
@@ -116,7 +117,7 @@ models:
       speed: 1.0
       timeout_sec: 120
     provider_config:
-      checkpoint: Aratako/Irodori-TTS-500M-v3
+      checkpoint: Aratako/Irodori-TTS-v4.1-Small
       codec_repo: Aratako/Semantic-DACVAE-Japanese-32dim
       model_device: cuda
       codec_device: cuda
@@ -284,7 +285,6 @@ bindings:
       duration_scale: 1.0
       cfg_scale_text: 3.0
       cfg_scale_speaker: 5.0
-      max_ref_seconds: 30.0
 
   tts-fake:
     provider_config: {}
@@ -347,7 +347,7 @@ bindings:
 最終的にProviderに渡る設定:
 
 ```yaml
-checkpoint: Aratako/Irodori-TTS-500M-v3
+checkpoint: Aratako/Irodori-TTS-v4.1-Small
 codec_repo: Aratako/Semantic-DACVAE-Japanese-32dim
 model_device: cuda
 codec_device: cuda

@@ -24,6 +24,7 @@ class ManagedHttpEngineProcess:
         cwd: Working directory for the engine process.
         command: Command-line arguments to start the engine.
         startup_timeout_sec: Maximum seconds to wait for the engine to become ready.
+        env: Extra environment variables for the engine process (override inherited ones).
     """
 
     def __init__(
@@ -34,6 +35,7 @@ class ManagedHttpEngineProcess:
         cwd: str | Path,
         command: list[str],
         startup_timeout_sec: int = 180,
+        env: dict[str, str] | None = None,
     ) -> None:
         self._name = name
         self._base_url = base_url.rstrip("/")
@@ -41,6 +43,7 @@ class ManagedHttpEngineProcess:
         self._cwd = Path(cwd)
         self._command = list(command)
         self._startup_timeout_sec = startup_timeout_sec
+        self._env = dict(env or {})
         self._process: subprocess.Popen[str] | None = None
 
     # ── Lifecycle ──
@@ -56,6 +59,7 @@ class ManagedHttpEngineProcess:
         logger.info("Starting managed %s at %s", self._name, self._base_url)
         env = os.environ.copy()
         env.pop("VIRTUAL_ENV", None)
+        env.update(self._env)
 
         popen_kwargs: dict[str, object] = {"text": True}
         if _IS_WINDOWS:

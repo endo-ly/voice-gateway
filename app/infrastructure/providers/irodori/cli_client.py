@@ -64,9 +64,9 @@ class IrodoriCliClient:
                 codec_device=cfg.get("codec_device", "cpu"),
                 model_precision=cfg.get("model_precision", "fp32"),
                 codec_precision=cfg.get("codec_precision", "fp32"),
-                num_steps=cfg.get("num_steps", 28),
+                num_steps=cfg.get("num_steps"),
                 seed=cfg.get("seed", 0),
-                speaker_kv_scale=cfg.get("speaker_kv_scale", 1.0),
+                speaker_kv_scale=cfg.get("speaker_kv_scale"),
                 max_text_len=cfg.get("max_text_len"),
                 )
 

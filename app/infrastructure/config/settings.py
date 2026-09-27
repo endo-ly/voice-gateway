@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     irodori_server_port: int = Field(default=18790, validation_alias="IRODORI_SERVER_PORT")
     irodori_server_startup_timeout_sec: int = Field(default=300, validation_alias="IRODORI_SERVER_STARTUP_TIMEOUT_SEC")
     irodori_server_api_key: str = Field(default="", validation_alias="IRODORI_SERVER_API_KEY")
+    irodori_server_hf_checkpoint: str = Field(default="", validation_alias="IRODORI_SERVER_HF_CHECKPOINT")
     aivis_base_url: str = Field(default="http://127.0.0.1:10101", validation_alias="AIVIS_BASE_URL")
     aivis_manage_engine: bool = Field(default=False, validation_alias="AIVIS_MANAGE_ENGINE")
     aivis_engine_dir: str = ".vendor/AivisSpeech-Engine"

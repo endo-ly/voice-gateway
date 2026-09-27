@@ -29,6 +29,7 @@ def test_create_irodori_tts_server_process_defaults(monkeypatch, tmp_path):
         "18790",
     ]
     assert process._startup_timeout_sec == 300
+    assert process._env == {}
 
 
 def test_create_irodori_tts_server_process_custom_settings(monkeypatch, tmp_path):
@@ -55,3 +56,13 @@ def test_create_irodori_tts_server_process_custom_settings(monkeypatch, tmp_path
         "19000",
     ]
     assert process._startup_timeout_sec == 600
+
+
+def test_create_irodori_tts_server_process_passes_hf_checkpoint(monkeypatch, tmp_path):
+    monkeypatch.setenv("IRODORI_SERVER_DIR", str(tmp_path))
+    monkeypatch.setenv("IRODORI_SERVER_HF_CHECKPOINT", "Aratako/Irodori-TTS-v4.1-Small")
+    settings = Settings(_env_file=None)
+
+    process = create_irodori_tts_server_process(settings)
+
+    assert process._env == {"IRODORI_HF_CHECKPOINT": "Aratako/Irodori-TTS-v4.1-Small"}

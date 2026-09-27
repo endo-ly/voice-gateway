@@ -11,9 +11,9 @@ class IrodoriCliBuilder:
         codec_device: str,
         model_precision: str,
         codec_precision: str,
-        num_steps: int,
-        seed: int,
-        speaker_kv_scale: float,
+        num_steps: int | None = None,
+        seed: int = 0,
+        speaker_kv_scale: float | None = None,
         max_text_len: int | None = None,
         ref_latent_path: str | None = None,
         ref_wav_path: str | None = None,
@@ -31,14 +31,16 @@ class IrodoriCliBuilder:
             "--text", text,
             *ref_args,
             "--output-wav", output_wav_path,
-            "--num-steps", str(num_steps),
             "--seed", str(seed),
-            "--speaker-kv-scale", str(speaker_kv_scale),
             "--model-device", model_device,
             "--codec-device", codec_device,
             "--model-precision", model_precision,
             "--codec-precision", codec_precision,
         ]
+        if num_steps is not None:
+            cmd.extend(["--num-steps", str(num_steps)])
+        if speaker_kv_scale is not None:
+            cmd.extend(["--speaker-kv-scale", str(speaker_kv_scale)])
         if max_text_len is not None:
             cmd.extend(["--max-text-len", str(max_text_len)])
         return cmd

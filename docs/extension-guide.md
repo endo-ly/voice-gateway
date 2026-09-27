@@ -276,7 +276,7 @@ models:
       speed: 1.0
       timeout_sec: 300    # 高品質なのでタイムアウトを長めに
     provider_config:
-      checkpoint: Aratako/Irodori-TTS-500M-v2
+      checkpoint: Aratako/Irodori-TTS-v4.1-Small
       model_device: cuda
       codec_device: cuda
       model_precision: fp32

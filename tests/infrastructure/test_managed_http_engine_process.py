@@ -69,6 +69,7 @@ async def test_engine_starts_with_configured_command(monkeypatch, tmp_path):
         cwd=str(tmp_path),
         command=command,
         startup_timeout_sec=1,
+        env={"ENGINE_EXTRA": "1"},
     )
     await process.start()
 
@@ -76,6 +77,7 @@ async def test_engine_starts_with_configured_command(monkeypatch, tmp_path):
     assert argv == command
     assert calls[0][1]["cwd"] == tmp_path
     assert calls[0][1]["env"].get("VIRTUAL_ENV") is None
+    assert calls[0][1]["env"]["ENGINE_EXTRA"] == "1"
 
     if _IS_WINDOWS:
         assert calls[0][1].get("creationflags") == subprocess.CREATE_NEW_PROCESS_GROUP
