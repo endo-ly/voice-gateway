@@ -29,6 +29,28 @@ def _make_request(**overrides) -> ProviderSynthesisRequest:
     return ProviderSynthesisRequest(**defaults)
 
 
+@pytest.mark.parametrize(
+    "ref_latent_path, expected_key, expected_path",
+    [
+        ("assets/voices/lyre/ref_latent.pt", "ref_latent", "assets/voices/lyre/ref_latent.pt"),
+        (None, "ref_wav", "assets/voices/lyre/lyre.wav"),
+        ("", "ref_wav", "assets/voices/lyre/lyre.wav"),
+    ],
+)
+def test_server_client_sends_only_one_reference(ref_latent_path, expected_key, expected_path):
+    client = IrodoriServerClient()
+    request = _make_request(provider_config={
+        "ref_wav_path": "assets/voices/lyre/lyre.wav",
+        "ref_latent_path": ref_latent_path,
+    })
+
+    irodori = client._build_payload(request)["irodori"]
+
+    assert irodori[expected_key] == os.path.abspath(expected_path)
+    other_key = "ref_wav" if expected_key == "ref_latent" else "ref_latent"
+    assert other_key not in irodori
+
+
 @pytest.mark.asyncio
 async def test_server_client_synthesizes_wav(monkeypatch):
     sent_payloads = []

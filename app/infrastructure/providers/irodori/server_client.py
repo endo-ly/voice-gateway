@@ -88,9 +88,15 @@ class IrodoriServerClient:
         }
 
         for cli_key, server_key in _CLI_TO_SERVER_KEY_MAP.items():
+            # Match the CLI backend: latent takes precedence over waveform.
+            # The server rejects requests containing both reference types.
+            if cli_key == "ref_wav_path" and cfg.get("ref_latent_path"):
+                continue
             value = cfg.get(cli_key)
             if value is not None:
                 if cli_key in _PATH_KEYS:
+                    if not value:
+                        continue
                     value = os.path.abspath(value)
                 irodori[server_key] = value
 
